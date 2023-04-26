@@ -1,0 +1,91 @@
+/*
+ * *********************************************************************************************************************
+ *
+ * SolidBlue 3: Data safety
+ * http://tidalwave.it/projects/solidblue3
+ *
+ * Copyright (C) 2023 - 2023 by Tidalwave s.a.s. (http://tidalwave.it)
+ *
+ * *********************************************************************************************************************
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
+ * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations under the License.
+ *
+ * *********************************************************************************************************************
+ *
+ * git clone https://bitbucket.org/tidalwave/solidblue3j-src
+ * git clone https://github.com/tidalwave-it/solidblue3j-src
+ *
+ * *********************************************************************************************************************
+ */
+package it.tidalwave.datamanager.model;
+
+import java.time.LocalDateTime;
+import java.util.List;
+import java.nio.file.Path;
+import nl.jqno.equalsverifier.EqualsVerifier;
+import it.tidalwave.util.Id;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.MatcherAssert.assertThat;
+
+/***********************************************************************************************************************
+ *
+ * @author      Fabrizio Giudici
+ *
+ **********************************************************************************************************************/
+public class ManagedFileTest
+  {
+    private ManagedFile underTest;
+
+    /******************************************************************************************************************/
+    @BeforeMethod
+    public void setup()
+      {
+        final var fingerprint = Fingerprint.builder()
+                                           .id(Id.of("id"))
+                                           .name("/foo/bar")
+                                           .algorithm("md5")
+                                           .fingerprint("xyz")
+                                           .timestamp(LocalDateTime.of(2023, 4, 22, 10, 19))
+                                           .build();
+        underTest = new ManagedFile(Id.of("0"), Path.of("/foo/bar"), () -> List.of(fingerprint));
+      }
+
+    /******************************************************************************************************************/
+    @Test
+    public void test_equals_and_hashCode()
+      {
+        EqualsVerifier.forClass(ManagedFile.class).withIgnoredFields("asDelegate").verify();
+      }
+
+    /******************************************************************************************************************/
+    @Test
+    public void test_toString_without_supplier_invoked()
+      {
+        // when
+        final var actualResult = underTest.toString();
+        // then
+        assertThat(actualResult, is("ManagedFile(id=0, path=/foo/bar, fingerprints=LazySupplier(ref=null))"));
+      }
+
+    /******************************************************************************************************************/
+    @Test
+    public void test_toString_with_supplier_invoked()
+      {
+        // when
+        underTest.getFingerprints();
+        final var actualResult = underTest.toString();
+        // then
+        assertThat(actualResult, is("ManagedFile(id=0, path=/foo/bar, " +
+                                    "fingerprints=LazySupplier(ref=[Fingerprint(id=id, name=/foo/bar, " +
+                                    "algorithm=md5, fingerprint=xyz, timestamp=2023-04-22T10:19)]))"));
+      }
+  }

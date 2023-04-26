@@ -1,12 +1,113 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+    *********************************************************************************************************************
+
+    SolidBlue 3: Data safety
+    http://tidalwave.it/projects/solidblue3
+
+    Copyright (C) 2023 - 2023 by Tidalwave s.a.s. (http://tidalwave.it)
+
+    *********************************************************************************************************************
+
+    Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
+    the License. You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
+    an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  See the License for the
+    specific language governing permissions and limitations under the License.
+
+    *********************************************************************************************************************
+
+    git clone https://bitbucket.org/tidalwave/solidblue3j-src
+    git clone https://github.com/tidalwave-it/solidblue3j-src
+
+    *********************************************************************************************************************
+
+-->
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
+    <parent>
+        <groupId>it.tidalwave.superpom</groupId>
+        <artifactId>superpom</artifactId>
+        <version>5.1</version>
+        <relativePath />
+    </parent>
+
     <groupId>it.tidalwave.solidblue3</groupId>
-    <artifactId>solidblue</artifactId>
-    <version>1.0-ALPHA-1-SNAPSHOT</version>
+    <artifactId>solidblue3</artifactId>
+    <version>1.0-SNAPSHOT</version>
+    <packaging>pom</packaging>
+    <name>SolidBlue III</name>
+    <inceptionYear>2023</inceptionYear>
+    <url>https://tidalwave.bitbucket.io/solidblue3j/</url>
+    <description>A tool for data backup and consistency.</description>
 
+    <distributionManagement>
+        <site>
+            <id>solidblue3-site</id>
+            <url>${tidalwave.project.url}</url>
+        </site>
+    </distributionManagement>
 
+    <properties>
+        <tft.maven.requiredJdk>[17, 18)</tft.maven.requiredJdk>
+        <tft.javac.source>17</tft.javac.source>
+        <tft.javac.target>17</tft.javac.target>
+        <tft.javac.release>17</tft.javac.release>
+        <scm.repo.url>ssh://git@bitbucket.org/tidalwave/solidblue3j-src</scm.repo.url>
+        <scm.repo.readonly.url>https://bitbucket.org/tidalwave/solidblue3j-src</scm.repo.readonly.url>
+        <scm.repo.browse.url>https://bitbucket.org/tidalwave/solidblue3j-src/src</scm.repo.browse.url>
+        <tidalwave.project.url>http://tidalwave.it/projects/solidblue3j</tidalwave.project.url>
+        <tidalwave.slogan>SolidBlue 3: Data safety</tidalwave.slogan>
+        <tidalwave.ci.view>SolidBlue3</tidalwave.ci.view>
+        <tidalwave.issues>SLB3J</tidalwave.issues>
+        <tidalwave.github.readonly.url>https://github.com/tidalwave-it/solidblue3j-src</tidalwave.github.readonly.url>
+        <tidalwave.github.browse.url>https://github.com/tidalwave-it/solidblue3j-src</tidalwave.github.browse.url>
+
+        <!-- FIXME: plugin version 3.0.0 doesn't suppor multiline strings; more recent versions crash with JDK 17 -->
+        <tft.checkstyle.skip>true</tft.checkstyle.skip>
+    </properties>
+
+    <!-- Repeated because of http://jira.codehaus.org/browse/SCM-442 -->
+    <scm>
+        <connection>scm:git:${scm.repo.readonly.url}</connection>
+        <developerConnection>scm:git:${scm.repo.effective.url}</developerConnection>
+        <url>${scm.repo.browse.url}</url>
+        <tag>HEAD</tag>
+    </scm>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>it.tidalwave.solidblue3</groupId>
+                <artifactId>solidblue3-application-nogui</artifactId>
+                <version>1.0-SNAPSHOT</version>
+            </dependency>
+            <dependency>
+                <groupId>it.tidalwave.solidblue3</groupId>
+                <artifactId>solidblue3-model</artifactId>
+                <version>1.0-SNAPSHOT</version>
+            </dependency>
+            <dependency>
+                <groupId>it.tidalwave.solidblue3</groupId>
+                <artifactId>solidblue3-dao</artifactId>
+                <version>1.0-SNAPSHOT</version>
+            </dependency>
+            <dependency>
+                <groupId>it.tidalwave.solidblue3</groupId>
+                <artifactId>solidblue3-commons</artifactId>
+                <version>1.0-SNAPSHOT</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <modules>
+        <module>modules</module>
+    </modules>
 </project>
