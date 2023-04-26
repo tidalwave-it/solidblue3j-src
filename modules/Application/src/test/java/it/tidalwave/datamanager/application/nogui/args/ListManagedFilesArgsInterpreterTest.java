@@ -82,7 +82,7 @@ public class ListManagedFilesArgsInterpreterTest
         // when
         underTest.run(new DefaultApplicationArguments(args));
         // then
-        assertThat(presentation.errorToString(), is("--max cannot be used with --regex or --missing\n"));
+        assertThat(presentation.errorToString(), is("--max cannot be used with --regex or --missing"));
         verifyNoInteractions(presentationController);
         verifyNoInteractions(usageArgsInterpreter);
       }

@@ -82,7 +82,7 @@ public class ListManagedFilesArgsInterpreter implements ApplicationRunner, Usage
 
                 if ((regex.isPresent() || missing) && max.isPresent())
                   {
-                    presentation.notifyError("--max cannot be used with --regex or --missing\n");
+                    presentation.notifyError("--max cannot be used with --regex or --missing");
                   }
                 else
                   {

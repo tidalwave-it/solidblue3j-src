@@ -84,7 +84,7 @@ public class JpaRepositoryFinder<M, E, F extends Finder<M>> extends HierarchicFi
         @Override @Nonnull
         public String toString()
           {
-            return "JpaSortCriterion(%s, %s)".formatted(criterion.jpaFieldName, direction.name());
+            return "JpaSorter(%s, %s)".formatted(criterion.jpaFieldName, direction.name());
           }
       }
 
@@ -123,7 +123,7 @@ public class JpaRepositoryFinder<M, E, F extends Finder<M>> extends HierarchicFi
     @Override @Nonnull
     public F sort (@Nonnull final SortCriterion criterion, @Nonnull final SortDirection direction)
       {
-        if (criterion instanceof JpaSortCriterion jpaSortCriterion)
+        if (criterion instanceof final JpaSortCriterion jpaSortCriterion)
           {
             final var sorters = concat(this.sorters, new JpaSorter(jpaSortCriterion, direction));
             return clonedWith(new JpaRepositoryFinder<M, E, F>(repository, mapper, sorters));

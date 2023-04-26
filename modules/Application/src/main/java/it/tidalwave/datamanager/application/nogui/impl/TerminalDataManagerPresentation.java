@@ -94,7 +94,7 @@ public class TerminalDataManagerPresentation implements DataManagerPresentation
     /*******************************************************************************************************************
      *
      ******************************************************************************************************************/
-    private void renderManagedFile (@Nonnull final Pair<Integer, PresentationModel> pair)
+    private void renderManagedFile (@Nonnull final Pair<Integer, ? extends PresentationModel> pair)
       {
         final var managedFilePm = pair.b;
         printer.accept("%05d) %s".formatted(pair.a, managedFilePm.as(_Displayable_).getDisplayName()));

@@ -31,12 +31,10 @@ import java.util.ArrayList;
 import java.util.List;
 import it.tidalwave.util.As;
 import it.tidalwave.role.SimpleComposite;
-import it.tidalwave.role.ui.Displayable;
 import it.tidalwave.role.ui.PresentationModel;
 import it.tidalwave.datamanager.model.Fingerprint;
 import it.tidalwave.datamanager.model.ManagedFile;
 import lombok.Getter;
-import static it.tidalwave.role.ui.Displayable._Displayable_;
 
 /***********************************************************************************************************************
  *
