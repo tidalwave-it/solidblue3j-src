@@ -25,6 +25,10 @@
         <sqlite-jdbc.version>3.41.2.1</sqlite-jdbc.version>
 
         <tft.spring-boot-maven-plugin.version>3.0.6</tft.spring-boot-maven-plugin.version>
+
+        <!-- To fix security issues -->
+        <jquery.version>3.6.4</jquery.version>
+        <snakeyaml.version>2.0</snakeyaml.version>
     </properties>
 
     <dependencyManagement>
@@ -81,6 +85,18 @@
                 <groupId>nl.jqno.equalsverifier</groupId>
                 <artifactId>equalsverifier</artifactId>
                 <version>${equalsverifier.version}</version>
+            </dependency>
+
+            <!-- To fix security issues -->
+            <dependency>
+                <groupId>org.webjars</groupId>
+                <artifactId>jquery</artifactId>
+                <version>${jquery.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.yaml</groupId>
+                <artifactId>snakeyaml</artifactId>
+                <version>${snakeyaml.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
