@@ -33,7 +33,7 @@ import org.springframework.boot.ApplicationRunner;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 import it.tidalwave.datamanager.application.nogui.DataManagerPresentation;
-import it.tidalwave.datamanager.application.nogui.DataManagerPresentationController;
+import it.tidalwave.datamanager.application.nogui.DataManagerPresentationControl;
 import lombok.RequiredArgsConstructor;
 import static it.tidalwave.datamanager.application.nogui.args.ArgumentsUtils.*;
 import static java.util.stream.Collectors.*;
@@ -51,7 +51,7 @@ public class ListManagedFilesArgsInterpreter implements ApplicationRunner, Usage
     private static final Set<String> VALID_OPTIONS = Set.of("fingerprints", "max", "regex", "missing");
 
     @Nonnull
-    private final DataManagerPresentationController presentationController;
+    private final DataManagerPresentationControl presentationController;
 
     @Nonnull
     private final DataManagerPresentation presentation;

@@ -37,7 +37,7 @@ import java.util.Optional;
  * @author      Fabrizio Giudici
  *
  **********************************************************************************************************************/
-public interface DataManagerPresentationController
+public interface DataManagerPresentationControl
   {
     /*******************************************************************************************************************
      *

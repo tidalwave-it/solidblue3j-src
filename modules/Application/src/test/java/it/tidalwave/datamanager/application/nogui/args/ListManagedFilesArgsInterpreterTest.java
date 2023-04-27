@@ -29,7 +29,7 @@ package it.tidalwave.datamanager.application.nogui.args;
 import jakarta.annotation.Nonnull;
 import java.util.Optional;
 import org.springframework.boot.DefaultApplicationArguments;
-import it.tidalwave.datamanager.application.nogui.DataManagerPresentationController;
+import it.tidalwave.datamanager.application.nogui.DataManagerPresentationControl;
 import it.tidalwave.datamanager.application.nogui.MockDataManagerPresentation;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
@@ -47,7 +47,7 @@ public class ListManagedFilesArgsInterpreterTest
   {
     private ListManagedFilesArgsInterpreter underTest;
 
-    private DataManagerPresentationController presentationController;
+    private DataManagerPresentationControl presentationController;
 
     private MockDataManagerPresentation presentation;
 
@@ -57,7 +57,7 @@ public class ListManagedFilesArgsInterpreterTest
     @BeforeMethod
     public void setup()
       {
-        presentationController = mock(DataManagerPresentationController.class);
+        presentationController = mock(DataManagerPresentationControl.class);
         presentation = new MockDataManagerPresentation();
         usageArgsInterpreter = mock(UsageArgsInterpreter.class);
         underTest = new ListManagedFilesArgsInterpreter(presentationController, presentation, usageArgsInterpreter);

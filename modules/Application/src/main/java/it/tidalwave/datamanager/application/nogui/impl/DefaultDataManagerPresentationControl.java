@@ -38,7 +38,7 @@ import it.tidalwave.role.ui.PresentationModel;
 import it.tidalwave.datamanager.model.DataManager;
 import it.tidalwave.datamanager.model.ManagedFile;
 import it.tidalwave.datamanager.application.nogui.DataManagerPresentation;
-import it.tidalwave.datamanager.application.nogui.DataManagerPresentationController;
+import it.tidalwave.datamanager.application.nogui.DataManagerPresentationControl;
 import lombok.RequiredArgsConstructor;
 import static it.tidalwave.util.Finder.SortDirection.ASCENDING;
 import static it.tidalwave.util.spring.jpa.JpaRepositoryFinder.by;
@@ -46,14 +46,14 @@ import static it.tidalwave.role.ui.spi.PresentationModelCollectors.toCompositePr
 
 /***********************************************************************************************************************
  *
- * The default implementation of {@link DataManagerPresentationController}.
+ * The default implementation of {@link DataManagerPresentationControl}.
  *
  * @stereotype  Presentation Control
  * @author      Fabrizio Giudici
  *
  **********************************************************************************************************************/
 @Component @RequiredArgsConstructor
-public class DefaultDataManagerPresentationControl implements DataManagerPresentationController
+public class DefaultDataManagerPresentationControl implements DataManagerPresentationControl
   {
     @Nonnull
     private final DataManager dataManager;
