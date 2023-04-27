@@ -7,7 +7,8 @@ spring:
       ddl-auto: none
       format_sql: false
     properties:
-      show_sql: false
+      hibernate:
+        show_sql: false
       hibernate.dialect: org.hibernate.community.dialect.SQLiteDialect
 
 logging:
