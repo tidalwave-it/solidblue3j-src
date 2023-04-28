@@ -29,8 +29,10 @@ package it.tidalwave.datamanager.dao.impl.jpa;
 import jakarta.annotation.Nonnull;
 import jakarta.inject.Inject;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Optional;
 import java.util.Random;
 import java.util.function.Consumer;
 import java.util.function.IntFunction;
@@ -51,6 +53,7 @@ import it.tidalwave.util.spring.jpa.impl.DefaultFinderJpaRepository;
 import it.tidalwave.util.spring.jpa.impl.LoggingJpaTransactionManager;
 import it.tidalwave.datamanager.model.ManagedFile;
 import lombok.extern.slf4j.Slf4j;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 import static jakarta.transaction.Transactional.TxType.NEVER;
 import static java.util.Comparator.*;
@@ -84,6 +87,8 @@ public class JpaDataManagerDaoTest extends AbstractTestNGSpringContextTests
     @Inject
     private LoggingJpaTransactionManager txManager;
 
+    private final List<ManagedFileEntity> entities = new ArrayList<>();
+
     private final IdFactory idFactory = IdFactory.MOCK;
 
     private final Iterator<LocalDateTime> timestampSequence = randomLocalDateTimeStream(
@@ -93,17 +98,32 @@ public class JpaDataManagerDaoTest extends AbstractTestNGSpringContextTests
             .iterator();
 
     /******************************************************************************************************************/
-    @Test @Transactional(NEVER)
-    public void test_findManagedFiles()
+    @Test
+    public void test_populateDatabase()
+      {
+        entities.addAll(createTestEntities());
+        runInTx(em -> entities.forEach(em::persist));
+        // TODO: dump database, assert schema
+      }
+
+    /******************************************************************************************************************/
+    @Test(dataProvider = "queryParameters", dependsOnMethods = "test_populateDatabase") @Transactional(NEVER)
+    public void test_findManagedFiles (@Nonnull final Optional<String> fingerprint)
       {
         // given
-        final var entities = createTestEntities();
-        runInTx(em -> entities.forEach(em::persist));
         txManager.resetCounters();
         // when
-        final var actualResult = underTest.findManagedFiles().sort(by("path"), ASCENDING).results();
+        final var actualResult = underTest.findManagedFiles()
+                                          .sort(by("path"), ASCENDING)
+                                          .withFingerprint(fingerprint)
+                                          .results();
         // then
         assertThat(txManager.getCommitCount(), is(1));
+
+        final var expectedResult = entities.stream()
+                                           .filter(mfe -> fingerprint.map(fp -> contains(mfe, fp)).orElse(true))
+                                           .map(underTest::entityToModel)
+                                           .toList();
 
         log.info("Asserting that lazy collection of fingerprints not fetched yet...");
         // TODO: this does not test ManagedFileEntity lazy field, only ManagedFile
@@ -115,15 +135,13 @@ public class JpaDataManagerDaoTest extends AbstractTestNGSpringContextTests
         log.info("Triggering lazy fetch...");
         txManager.resetCounters();
         actualResult.forEach(ManagedFile::getFingerprints);
-        assertThat(txManager.getCommitCount(), is(entities.size()));
+        assertThat(txManager.getCommitCount(), is(expectedResult.size()));
 
         log.info("Actual result:");
         txManager.resetCounters();
         actualResult.forEach(m -> log.info("    {}", m));
-        final var expectedResult = entities.stream().map(underTest::entityToModel).toList();
         assertThat(actualResult, containsInAnyOrder(expectedResult.toArray()));
         assertThat(txManager.getCommitCount(), is(0));
-        // TODO: dump database
       }
 
     /******************************************************************************************************************/
@@ -175,6 +193,12 @@ public class JpaDataManagerDaoTest extends AbstractTestNGSpringContextTests
       }
 
     /******************************************************************************************************************/
+    private static boolean contains (@Nonnull final ManagedFileEntity entity, @Nonnull final String fingerprint)
+      {
+        return entity.getFingerprints().stream().anyMatch(fp -> fp.getValue().equals(fingerprint));
+      }
+
+    /******************************************************************************************************************/
     private static Object inspect (@Nonnull final Object object, @Nonnull final String fieldName)
       {
         try
@@ -187,5 +211,17 @@ public class JpaDataManagerDaoTest extends AbstractTestNGSpringContextTests
           {
             throw new RuntimeException(e);
           }
+      }
+
+    /******************************************************************************************************************/
+    @DataProvider(name="queryParameters")
+    private static Object[][] queryParameters()
+      {
+        return new Object[][]
+          {
+            { Optional.empty() },
+            { Optional.of("missing") },
+            { Optional.of("80fe035fe88f37471862c5ba5013b472") }
+          };
       }
   }

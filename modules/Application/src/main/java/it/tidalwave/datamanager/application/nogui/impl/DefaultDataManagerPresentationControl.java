@@ -68,6 +68,7 @@ public class DefaultDataManagerPresentationControl implements DataManagerPresent
     public void renderManagedFiles (final boolean renderFingerprints,
                                     @Nonnull final Optional<Integer> max,
                                     @Nonnull final Optional<String> regex,
+                                    @Nonnull final Optional<String> fingerprint,
                                     final boolean missing)
       {
         final Predicate<ManagedFile> filter1 = __ -> true;
@@ -78,6 +79,7 @@ public class DefaultDataManagerPresentationControl implements DataManagerPresent
                 o -> SimpleComposite.ofCloned(renderFingerprints ? o.getFingerprints() : List.of());
 
         final var pm = dataManager.findManagedFiles()
+                                  .withFingerprint(fingerprint)
                                   .sort(by("path"), ASCENDING)
                                   .max(max)
                                   .stream()

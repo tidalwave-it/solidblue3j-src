@@ -48,7 +48,7 @@ import static java.util.stream.Collectors.*;
 @Component @Order(0) @RequiredArgsConstructor
 public class ListManagedFilesArgsInterpreter implements ApplicationRunner, UsageCapable
   {
-    private static final Set<String> VALID_OPTIONS = Set.of("fingerprints", "max", "regex", "missing");
+    private static final Set<String> VALID_OPTIONS = Set.of("fingerprints", "max", "regex", "missing", "fingerprint");
 
     @Nonnull
     private final DataManagerPresentationControl presentationController;
@@ -78,6 +78,7 @@ public class ListManagedFilesArgsInterpreter implements ApplicationRunner, Usage
                 final var fingerprints = args.containsOption("fingerprints");
                 final var max = getIntOption(args, "max");
                 final var regex = getStringOption(args, "regex");
+                final var fingerprint = getStringOption(args, "fingerprint");
                 final var missing = args.containsOption("missing");
 
                 if ((regex.isPresent() || missing) && max.isPresent())
@@ -87,7 +88,7 @@ public class ListManagedFilesArgsInterpreter implements ApplicationRunner, Usage
                 else
                   {
                     usageArgsInterpreter.disableUsage();
-                    presentationController.renderManagedFiles(fingerprints, max, regex, missing);
+                    presentationController.renderManagedFiles(fingerprints, max, regex, fingerprint, missing);
                   }
               }
           }
@@ -100,14 +101,15 @@ public class ListManagedFilesArgsInterpreter implements ApplicationRunner, Usage
     public void printUsage()
       {
         presentation.output("""
-            Usage: solidblue3 list-files [--max=<n>] [--regex=<regex>] [--missing] [--fingerprints]
+            Usage: solidblue3 list-files [--max=<n>] [--regex=<regex>] [--fingerprint=<value> [--missing] [--fingerprints]
                               list files on the console
-                              --max=<n>         the max number of files to list
-                              --regex=<regex>   a filter for the files to list
-                              --missing         only list files no more in the filesystem
-                              --fingerprints    also render fingerprints
+                              --max=<n>               the max number of files to list
+                              --regex=<regex>         a filter for the files to list
+                              --fingerprint=<value>   filter file(s) with that fingerprint
+                              --missing               only list files no more in the filesystem
+                              --fingerprints          also render fingerprints
                               
-                              --max cannot be used with any filter
+                              --max cannot be used with --regex and --missing
             """);
       }
   }

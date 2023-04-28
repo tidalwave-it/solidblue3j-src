@@ -27,6 +27,7 @@
 package it.tidalwave.datamanager.model;
 
 import jakarta.annotation.Nonnull;
+import java.util.Optional;
 import it.tidalwave.util.spi.ExtendedFinderSupport;
 
 /***********************************************************************************************************************
@@ -40,12 +41,28 @@ import it.tidalwave.util.spi.ExtendedFinderSupport;
 public interface DataManager
   {
     /*******************************************************************************************************************
-     *
      * A {@link it.tidalwave.util.Finder} for querying {@link ManagedFile}s.
-     *
      ******************************************************************************************************************/
     public static interface ManagedFileFinder extends ExtendedFinderSupport<ManagedFile, ManagedFileFinder>
       {
+        /***************************************************************************************************************
+         * Specifies that returned {@link ManagedFile}s must contain the given fingerprint.
+         * @param     fingerprint   the fingerprint
+         * @return                  the same finder in fluent style
+         **************************************************************************************************************/
+        @Nonnull
+        public ManagedFileFinder withFingerprint (@Nonnull final Optional<String> fingerprint);
+
+        /***************************************************************************************************************
+         * Specifies that returned {@link ManagedFile}s must contain the given fingerprint.
+         * @param     fingerprint   the fingerprint
+         * @return                  the same finder in fluent style
+         **************************************************************************************************************/
+        @Nonnull
+        public default ManagedFileFinder withFingerprint (@Nonnull final String fingerprint)
+        {
+          return withFingerprint(Optional.of(fingerprint));
+        }
       }
 
     /*******************************************************************************************************************

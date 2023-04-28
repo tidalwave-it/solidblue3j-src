@@ -28,18 +28,19 @@ package it.tidalwave.datamanager.dao.impl.jpa;
 
 import jakarta.annotation.Nonnull;
 import java.util.List;
+import java.util.Optional;
 import java.io.Serial;
 import java.nio.file.Path;
 import org.springframework.stereotype.Component;
 import jakarta.transaction.Transactional;
 import it.tidalwave.util.Id;
 import it.tidalwave.util.spring.jpa.EntityModelMapper;
-import it.tidalwave.util.spring.jpa.FinderJpaRepository;
 import it.tidalwave.util.spring.jpa.JpaRepositoryFinder;
 import it.tidalwave.datamanager.model.DataManager.ManagedFileFinder;
 import it.tidalwave.datamanager.model.Fingerprint;
 import it.tidalwave.datamanager.model.ManagedFile;
 import it.tidalwave.datamanager.dao.DataManagerDao;
+import it.tidalwave.util.spring.jpa.FinderJpaRepository.QueryParameters;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import static jakarta.transaction.Transactional.TxType.SUPPORTS;
@@ -56,22 +57,85 @@ import static jakarta.transaction.Transactional.TxType.SUPPORTS;
 public class JpaDataManagerDao implements DataManagerDao, EntityModelMapper<ManagedFile, ManagedFileEntity>
   {
     /*******************************************************************************************************************
-     *
+     * A specialised {@link it.tidalwave.util.Finder} for {@link ManagedFileEntity}.
+     * @stereotype  Finder
      ******************************************************************************************************************/
     static class JpaManagedFileFinder
-            extends JpaRepositoryFinder<ManagedFile, ManagedFileEntity, ManagedFileFinder> implements ManagedFileFinder
+            extends JpaRepositoryFinder<ManagedFile, ManagedFileEntity, ManagedFileFinder, ManagedFileEntityJpaRepository>
+            implements ManagedFileFinder
       {
+        @Nonnull
+        static class ManagedFileQueryParameters extends QueryParameters<ManagedFileEntity, ManagedFileEntityJpaRepository>
+          {
+            @Nonnull
+            private final Optional<String> fingerprint;
+
+            public ManagedFileQueryParameters (final int first,
+                                               final int max,
+                                               @Nonnull final List<JpaSorter> sorters,
+                                               @Nonnull final Optional<String> fingerprint)
+              {
+                super(first, max, sorters);
+                this.fingerprint = fingerprint;
+              }
+
+            @Override @Nonnull
+            public List<ManagedFileEntity> execute (@Nonnull final ManagedFileEntityJpaRepository repository)
+              {
+                return fingerprint.map(s -> repository.findByFingerprintsValue(getPageRequest(), s).toList())
+                                  .orElseGet(() -> super.execute(repository));
+              }
+          }
         @Serial private static final long serialVersionUID = 0L;
 
-        public JpaManagedFileFinder (@Nonnull final FinderJpaRepository<ManagedFileEntity, ?> repository,
+        private final Optional<String> fingerprint;
+
+        /***************************************************************************************************************
+         *
+         **************************************************************************************************************/
+        public JpaManagedFileFinder (@Nonnull final ManagedFileEntityJpaRepository repository,
                                      @Nonnull final EntityModelMapper<ManagedFile, ManagedFileEntity> mapper)
           {
-            super(repository, mapper);
+            this(repository, mapper, Optional.empty());
           }
 
+        /***************************************************************************************************************
+         *
+         **************************************************************************************************************/
+        private JpaManagedFileFinder (@Nonnull final ManagedFileEntityJpaRepository repository,
+                                      @Nonnull final EntityModelMapper<ManagedFile, ManagedFileEntity> mapper,
+                                      @Nonnull final Optional<String> fingerprint)
+          {
+            super(repository, mapper);
+            this.fingerprint = fingerprint;
+          }
+
+        /***************************************************************************************************************
+         * The copy constructor required by {@link it.tidalwave.util.spi.HierarchicFinderSupport}.
+         **************************************************************************************************************/
         public JpaManagedFileFinder (@Nonnull final JpaManagedFileFinder other, @Nonnull final Object override)
           {
             super(other, override);
+            final var source = getSource(JpaManagedFileFinder.class, other, override);
+            this.fingerprint = source.fingerprint;
+          }
+
+        /***************************************************************************************************************
+         * {@inheritDoc}
+         **************************************************************************************************************/
+        @Override @Nonnull
+        public ManagedFileFinder withFingerprint (@Nonnull final Optional<String> fingerprint)
+          {
+            return clonedWith(new JpaManagedFileFinder(repository, mapper, fingerprint));
+          }
+
+        /***************************************************************************************************************
+         * {@inheritDoc}
+         **************************************************************************************************************/
+        @Override @Nonnull
+        protected ManagedFileQueryParameters getQueryParameters()
+          {
+            return new ManagedFileQueryParameters(firstResult, maxResults, sorters, fingerprint);
           }
       }
 
@@ -90,7 +154,7 @@ public class JpaDataManagerDao implements DataManagerDao, EntityModelMapper<Mana
     /*******************************************************************************************************************
      * {@inheritDoc}
      ******************************************************************************************************************/
-    @Transactional(SUPPORTS) @Override @Nonnull
+    @Override @Transactional(SUPPORTS) @Nonnull
     public ManagedFile entityToModel (@Nonnull final ManagedFileEntity entity)
       {
         return new ManagedFile(Id.of(entity.getId()),

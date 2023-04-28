@@ -106,7 +106,11 @@ public class ListManagedFilesArgsInterpreterTest
         // when
         underTest.run(new DefaultApplicationArguments("list-files"));
         // then
-        verify(presentationController).renderManagedFiles(false, Optional.empty(), Optional.empty(), false);
+        verify(presentationController).renderManagedFiles(false,
+                                                          Optional.empty(),
+                                                          Optional.empty(),
+                                                          Optional.empty(),
+                                                          false);
         verifyNoMoreInteractions(presentationController);
         verify(usageArgsInterpreter).disableUsage();
       }
@@ -118,7 +122,11 @@ public class ListManagedFilesArgsInterpreterTest
         // when
         underTest.run(new DefaultApplicationArguments("list-files", "--max=1"));
         // then
-        verify(presentationController).renderManagedFiles(false, Optional.of(1), Optional.empty(), false);
+        verify(presentationController).renderManagedFiles(false,
+                                                          Optional.of(1),
+                                                          Optional.empty(),
+                                                          Optional.empty(),
+                                                          false);
         verifyNoMoreInteractions(presentationController);
         verify(usageArgsInterpreter).disableUsage();
       }
@@ -130,7 +138,11 @@ public class ListManagedFilesArgsInterpreterTest
         // when
         underTest.run(new DefaultApplicationArguments("list-files", "--regex=.*2"));
         // then
-        verify(presentationController).renderManagedFiles(false, Optional.empty(), Optional.of(".*2"), false);
+        verify(presentationController).renderManagedFiles(false,
+                                                          Optional.empty(),
+                                                          Optional.of(".*2"),
+                                                          Optional.empty(),
+                                                          false);
         verifyNoMoreInteractions(presentationController);
         verify(usageArgsInterpreter).disableUsage();
       }
@@ -142,7 +154,27 @@ public class ListManagedFilesArgsInterpreterTest
         // when
         underTest.run(new DefaultApplicationArguments("list-files", "--fingerprints"));
         // then
-        verify(presentationController).renderManagedFiles(true, Optional.empty(), Optional.empty(), false);
+        verify(presentationController).renderManagedFiles(true,
+                                                          Optional.empty(),
+                                                          Optional.empty(),
+                                                          Optional.empty(),
+                                                          false);
+        verifyNoMoreInteractions(presentationController);
+        verify(usageArgsInterpreter).disableUsage();
+      }
+
+    /******************************************************************************************************************/
+    @Test
+    public void must_render_data_with_fingerprint()
+      {
+        // when
+        underTest.run(new DefaultApplicationArguments("list-files", "--fingerprint=fp"));
+        // then
+        verify(presentationController).renderManagedFiles(false,
+                                                          Optional.empty(),
+                                                          Optional.empty(),
+                                                          Optional.of("fp"),
+                                                          false);
         verifyNoMoreInteractions(presentationController);
         verify(usageArgsInterpreter).disableUsage();
       }
@@ -154,7 +186,11 @@ public class ListManagedFilesArgsInterpreterTest
         // when
         underTest.run(new DefaultApplicationArguments("list-files", "--missing"));
         // then
-        verify(presentationController).renderManagedFiles(false, Optional.empty(), Optional.empty(), true);
+        verify(presentationController).renderManagedFiles(false,
+                                                          Optional.empty(),
+                                                          Optional.empty(),
+                                                          Optional.empty(),
+                                                          true);
         verifyNoMoreInteractions(presentationController);
         verify(usageArgsInterpreter).disableUsage();
       }

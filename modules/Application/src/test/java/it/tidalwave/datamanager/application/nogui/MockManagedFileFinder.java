@@ -28,6 +28,8 @@ package it.tidalwave.datamanager.application.nogui;
 
 import jakarta.annotation.Nonnull;
 import java.util.List;
+import java.util.Optional;
+import java.util.function.Consumer;
 import java.io.Serial;
 import it.tidalwave.util.Pair;
 import it.tidalwave.util.spi.HierarchicFinderSupport;
@@ -53,12 +55,16 @@ public class MockManagedFileFinder
     @Nonnull
     private final List<Pair<SortCriterion, SortDirection>> sorters;
 
+    @Nonnull
+    private final Consumer<String> fingerprintConsumer;
+
     public MockManagedFileFinder (@Nonnull final MockManagedFileFinder other, @Nonnull final Object override)
       {
         super(other, override);
         final var source = getSource(MockManagedFileFinder.class, other, override);
         this.result = source.result;
         this.sorters = source.sorters;
+        this.fingerprintConsumer = source.fingerprintConsumer;
       }
 
     @Override @Nonnull
@@ -66,12 +72,20 @@ public class MockManagedFileFinder
       {
         // just accumulate sorters for assertions
         sorters.add(Pair.of(criterion, direction));
-        return clonedWith(new MockManagedFileFinder(result, sorters));
+        return clonedWith(new MockManagedFileFinder(result, sorters, fingerprintConsumer));
       }
 
     @Override @Nonnull
     protected List<ManagedFile> computeResults()
       {
         return result;
+      }
+
+    @Nonnull
+    public DataManager.ManagedFileFinder withFingerprint (@Nonnull final Optional<String> fingerprint)
+      {
+        // just accumulate for assertions
+        fingerprint.ifPresent(this.fingerprintConsumer);
+        return clonedWith(new MockManagedFileFinder(result, sorters, fingerprintConsumer));
       }
   }

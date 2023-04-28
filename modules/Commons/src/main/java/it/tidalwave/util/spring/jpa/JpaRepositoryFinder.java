@@ -32,6 +32,7 @@ import java.io.Serial;
 import org.springframework.data.domain.Sort;
 import it.tidalwave.util.Finder;
 import it.tidalwave.util.spi.HierarchicFinderSupport;
+import it.tidalwave.util.spring.jpa.FinderJpaRepository.QueryParameters;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import static it.tidalwave.util.CollectionUtils.concat;
@@ -44,23 +45,25 @@ import static lombok.AccessLevel.PRIVATE;
  * @param   <M> the static type of the model object
  * @param   <E> the static type of the JPA entity
  * @param   <F> the static type of the {@code Finder}
+ * @param   <R> the static type of the repository
  * @stereotype  Finder
  * @author      Fabrizio Giudici
  *
  **********************************************************************************************************************/
 @AllArgsConstructor(access = PRIVATE) @Slf4j
-public class JpaRepositoryFinder<M, E, F extends Finder<M>> extends HierarchicFinderSupport<M, F>
+public class JpaRepositoryFinder<M, E, F extends Finder<M>, R extends FinderJpaRepository<E, ?>>
+        extends HierarchicFinderSupport<M, F>
   {
     @Serial private static final long serialVersionUID = 0L;
 
     @Nonnull
-    private final FinderJpaRepository<E, ?> repository;
+    protected final R repository;
 
     @Nonnull
-    private final EntityModelMapper<M, E> mapper;
+    protected final EntityModelMapper<M, E> mapper;
 
     @Nonnull
-    private final List<JpaSorter> sorters;
+    protected final List<JpaSorter> sorters;
 
     /*******************************************************************************************************************
      *
@@ -96,8 +99,7 @@ public class JpaRepositoryFinder<M, E, F extends Finder<M>> extends HierarchicFi
      * @param     mapper        the mapper
      *
      ******************************************************************************************************************/
-    public JpaRepositoryFinder (@Nonnull final FinderJpaRepository<E, ?> repository,
-                                @Nonnull final EntityModelMapper<M, E> mapper)
+    public JpaRepositoryFinder (@Nonnull final R repository, @Nonnull final EntityModelMapper<M, E> mapper)
       {
         this(repository, mapper, List.of());
       }
@@ -108,11 +110,11 @@ public class JpaRepositoryFinder<M, E, F extends Finder<M>> extends HierarchicFi
      *
      ******************************************************************************************************************/
     @SuppressWarnings("unchecked")
-    public JpaRepositoryFinder (@Nonnull final JpaRepositoryFinder<M, E, F> other, @Nonnull final Object override)
+    public JpaRepositoryFinder (@Nonnull final JpaRepositoryFinder<M, E, F, R> other, @Nonnull final Object override)
       {
         super(other, override);
         final var source = getSource(JpaRepositoryFinder.class, other, override);
-        this.repository = source.repository;
+        this.repository = (R)source.repository; // See https://stackoverflow.com/questions/76129388
         this.mapper = source.mapper;
         this.sorters = source.sorters;
       }
@@ -126,7 +128,7 @@ public class JpaRepositoryFinder<M, E, F extends Finder<M>> extends HierarchicFi
         if (criterion instanceof final JpaSortCriterion jpaSortCriterion)
           {
             final var sorters = concat(this.sorters, new JpaSorter(jpaSortCriterion, direction));
-            return clonedWith(new JpaRepositoryFinder<M, E, F>(repository, mapper, sorters));
+            return clonedWith(new JpaRepositoryFinder<>(repository, mapper, sorters));
           }
 
         return super.sort(criterion, direction);
@@ -150,8 +152,27 @@ public class JpaRepositoryFinder<M, E, F extends Finder<M>> extends HierarchicFi
      * {@inheritDoc}
      ******************************************************************************************************************/
     @Override @Nonnull
-    protected List<M> computeNeededResults()
+    protected final List<M> computeNeededResults()
       {
-        return repository.findAll(firstResult, maxResults, sorters).stream().map(mapper::entityToModel).toList();
+        final var queryParameters = getQueryParameters();
+        log.info("computeNeededResults({})", queryParameters);
+        final var result = queryParameters.execute(repository).stream().map(mapper::entityToModel).toList();
+        log.info(">>>> returning {} items", result.size());
+        log.trace(">>>> returning {}", result);
+        return result;
+      }
+
+    /*******************************************************************************************************************
+     *
+     * Returns the query parameters for this finder. This method must be overridden by finder subclasses that manage
+     * further parameters.
+     *
+     * @return            the query parameters
+     *
+     ******************************************************************************************************************/
+    @Nonnull
+    protected QueryParameters<E, R> getQueryParameters()
+      {
+        return new QueryParameters<>(firstResult, maxResults, sorters);
       }
   }

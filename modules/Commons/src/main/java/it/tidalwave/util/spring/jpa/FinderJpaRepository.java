@@ -30,7 +30,11 @@ import jakarta.annotation.Nonnull;
 import java.util.Collection;
 import java.util.List;
 import java.util.function.Function;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.JpaRepository;
+import lombok.AllArgsConstructor;
+import lombok.ToString;
 import static it.tidalwave.util.spring.jpa.JpaRepositoryFinder.JpaSorter;
 
 /***********************************************************************************************************************
@@ -50,16 +54,35 @@ public interface FinderJpaRepository<E, K> extends JpaRepository<E, K>
   {
     /*******************************************************************************************************************
      *
-     * Returns all the entities in the given range.
+     * Holds parameters for querying an entity and performs a query by invoking a repository. This class can be
+     * specialised to hold further parameters.
      *
-     * @param   first         the first entity to retrieve
-     * @param   max           the max number of entities to retrieve
-     * @param   sorters       the sorters
-     * @return                the entities
+     * @param   <E>           the static type of the entity
+     * @param   <R>           the static type of the repository
      *
      ******************************************************************************************************************/
-    @Nonnull
-    public List<E> findAll (int first, int max, @Nonnull List<JpaSorter> sorters);
+    @AllArgsConstructor @ToString
+    public static class QueryParameters<E, R extends FinderJpaRepository<E, ?>>
+      {
+        private final int first;
+
+        private final int max;
+
+        @Nonnull
+        private final List<JpaSorter> sorters;
+
+        @Nonnull
+        public List<E> execute (@Nonnull final R repository)
+          {
+            return repository.findAll(getPageRequest()).toList();
+          }
+
+        @Nonnull
+        protected PageRequest getPageRequest()
+          {
+            return PageRequest.of(first, max, Sort.by(sorters.stream().map(JpaSorter::toOrder).toList()));
+          }
+      }
 
     /*******************************************************************************************************************
      *

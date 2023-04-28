@@ -28,12 +28,9 @@ package it.tidalwave.util.spring.jpa.impl;
 
 import jakarta.annotation.Nonnull;
 import java.util.Collection;
-import java.util.List;
 import java.util.function.Function;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceUnitUtil;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.support.JpaEntityInformation;
 import org.springframework.data.jpa.repository.support.SimpleJpaRepository;
@@ -41,7 +38,6 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import jakarta.transaction.Transactional;
 import it.tidalwave.util.spring.jpa.FinderJpaRepository;
 import lombok.extern.slf4j.Slf4j;
-import static it.tidalwave.util.spring.jpa.JpaRepositoryFinder.JpaSorter;
 
 /***********************************************************************************************************************
  *
@@ -83,22 +79,6 @@ public class DefaultFinderJpaRepository<E, K> extends SimpleJpaRepository<E, K> 
         super(domainClass, em);
         this.em = em;
         this.puUtil = em.getEntityManagerFactory().getPersistenceUnitUtil();
-      }
-
-    /*******************************************************************************************************************
-     *
-     * {@inheritDoc}
-     *
-     ******************************************************************************************************************/
-    @Override @Transactional @Nonnull
-    public List<E> findAll (final int first, final int max, @Nonnull final List<JpaSorter> sorters)
-      {
-        log.info("findAll({}, {}, {})", first, max, sorters);
-        final var sort = Sort.by(sorters.stream().map(JpaSorter::toOrder).toList());
-        final var result = findAll(PageRequest.of(first, max, sort)).toList();
-        log.info(">>>> returning {} items", result.size());
-        log.trace(">>>> returning {}", result);
-        return result;
       }
 
     /*******************************************************************************************************************

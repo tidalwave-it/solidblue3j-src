@@ -43,14 +43,16 @@ public interface DataManagerPresentationControl
      *
      * Render managed files with the specified options.
      *
+     * @param   fingerprints    render fingerprints too
      * @param   max             the maximum number of items to render
      * @param   regex           a regex filter
+     * @param   fingerprint     filters files having this fingerprint
      * @param   missing         filter output only to files no more present in the filesystem
-     * @param   fingerprints    render fingerprints too
      *
      ******************************************************************************************************************/
     public void renderManagedFiles (boolean fingerprints,
                                     @Nonnull Optional<Integer> max,
                                     @Nonnull Optional<String> regex,
+                                    @Nonnull Optional<String> fingerprint,
                                     boolean missing);
   }
