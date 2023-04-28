@@ -8,6 +8,18 @@ SolidBlue III
 
 A tool for data backup and consistency.
 
+Architecture and technologies:
+
++ the classic three-tier architecture is used: Model, DAO, Presentation;
++ [Spring 6 / Spring Boot 3](https://spring.io/) is the reference framework;
++ [SQLite](https://sqlite.org/) is the underlying database;
++ [Spring Data JPA](https://docs.spring.io/spring-data/jpa/docs/current/reference/html/) with [Hibernate](https://hibernate.org/) is used as ORM;
++ JPA entities are separated objects;
++ `Finder` and DCI roles from [TheseFoolishThings](http://tidalwave.it/projects/thesefoolishthings) are used;
++ [SLF4J](https://slf4j.org) and [Logback](https://logback.qos.ch) are used for logging;
++ [TestNG](https://testng.org) and [Mockito](https://site.mockito.org/) are used for testing;
++ [Lombok](https://projectlombok.org) is used for cleaner code.
+
 SolidBlue III requires and is tested with JDKs in this range: [17, 18).
 It is released under the [Apache Licence v2](https://www.apache.org/licenses/LICENSE-2.0.txt).
 
