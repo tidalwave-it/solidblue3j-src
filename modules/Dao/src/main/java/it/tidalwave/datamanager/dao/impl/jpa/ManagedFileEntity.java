@@ -34,6 +34,7 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OrderBy;
 import jakarta.persistence.Table;
@@ -54,13 +55,16 @@ import lombok.Setter;
  * @author      Fabrizio Giudici
  *
  **********************************************************************************************************************/
-@Entity @Table(name="files")
+@Entity
+@Table(name="files", indexes = { @Index(name = "files__id", columnList = "id"),
+                                 @Index(name = "files__path", columnList = "path")})
 @NoArgsConstructor @AllArgsConstructor @Getter
 @SuppressFBWarnings({"EI_EXPOSE_REP", "EI_EXPOSE_REP2"})
 public class ManagedFileEntity
   {
     @Id
     @Column(length = 36)
+
     private String id;
 
     @Column(nullable = false, columnDefinition = "text")

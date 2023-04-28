@@ -35,7 +35,7 @@ import it.tidalwave.util.PreferencesHandler;
 import lombok.extern.slf4j.Slf4j;
 import org.testng.annotations.Test;
 import static org.mockito.Mockito.*;
-import static org.hamcrest.CoreMatchers.*;
+import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 /***********************************************************************************************************************
