@@ -39,6 +39,7 @@ import java.util.function.IntFunction;
 import java.util.stream.IntStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.io.IOException;
 import java.nio.file.Path;
 import java.math.BigInteger;
 import jakarta.persistence.EntityManager;
@@ -63,6 +64,7 @@ import static it.tidalwave.util.Finder.SortDirection.ASCENDING;
 import static it.tidalwave.util.FunctionalCheckedExceptionWrappers.*;
 import static it.tidalwave.util.StreamUtils.randomLocalDateTimeStream;
 import static it.tidalwave.util.spring.jpa.JpaRepositoryFinder.by;
+import static it.tidalwave.util.test.FileComparisonUtils.assertSameContents;
 import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
@@ -99,15 +101,26 @@ public class JpaDataManagerDaoTest extends AbstractTestNGSpringContextTests
 
     /******************************************************************************************************************/
     @Test
-    public void test_populateDatabase()
+    public void test_database_schema()
+            throws IOException, InterruptedException
       {
-        entities.addAll(createTestEntities());
-        runInTx(em -> entities.forEach(em::persist));
-        // TODO: dump database, assert schema
+        final var dbFile = Path.of("target/test1.db");
+        final var actualDump = Path.of("target/actual-schema.sql");
+        final var expectedDump = Path.of("src/test/resources/expected-schema.sql");
+        dumpSchema(dbFile, actualDump);
+        assertSameContents(expectedDump, actualDump);
       }
 
     /******************************************************************************************************************/
-    @Test(dataProvider = "queryParameters", dependsOnMethods = "test_populateDatabase") @Transactional(NEVER)
+    @Test(dependsOnMethods = "test_database_schema")
+    public void test_populate_database()
+      {
+        entities.addAll(createTestEntities());
+        runInTx(em -> entities.forEach(em::persist));
+      }
+
+    /******************************************************************************************************************/
+    @Test(dataProvider = "queryParameters", dependsOnMethods = "test_populate_database") @Transactional(NEVER)
     public void test_findManagedFiles (@Nonnull final Optional<String> fingerprint)
       {
         // given
@@ -211,6 +224,16 @@ public class JpaDataManagerDaoTest extends AbstractTestNGSpringContextTests
           {
             throw new RuntimeException(e);
           }
+      }
+
+    /******************************************************************************************************************/
+    private void dumpSchema (@Nonnull final Path dbFile, @Nonnull final Path dumpFile)
+            throws IOException, InterruptedException
+      {
+        log.info("Dumping schema to {} ...", dumpFile);
+        final var cmd = new String[]{"/bin/sh", "-c", "sqlite3 %s .dump > %s".formatted(dbFile, dumpFile)};
+        final var status = Runtime.getRuntime().exec(cmd).waitFor();
+        assertThat(status, is(0));
       }
 
     /******************************************************************************************************************/

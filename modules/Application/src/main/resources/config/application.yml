@@ -1,9 +1,8 @@
 spring:
+  profiles:
+    active: production
   main:
     banner-mode: "off"
-  jpa:
-    hibernate:
-      ddl-auto: none
 
 logging:
   level:

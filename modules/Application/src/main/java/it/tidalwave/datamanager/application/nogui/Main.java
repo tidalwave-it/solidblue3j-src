@@ -30,11 +30,9 @@ import jakarta.annotation.Nonnull;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
-import org.springframework.boot.autoconfigure.jdbc.DataSourceProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
-import javax.sql.DataSource;
 import org.slf4j.LoggerFactory;
 import it.tidalwave.util.PreferencesHandler;
 import it.tidalwave.util.spring.jpa.impl.DefaultFinderJpaRepository;
@@ -58,9 +56,7 @@ import it.tidalwave.datamanager.dao.impl.jpa.JpaDataManagerDao;
 public class Main
   {
     /*******************************************************************************************************************
-     *
      * Primary entry point.
-     *
      ******************************************************************************************************************/
     public static void main (@Nonnull final String... args)
       {
@@ -74,27 +70,20 @@ public class Main
       }
 
     /*******************************************************************************************************************
-     *
-     * Configures a {@code DataSource} with the proper path for the database.
-     *
-     ******************************************************************************************************************/
-    @Bean
-    public DataSource getDataSource (@Nonnull final DataSourceProperties properties)
-      {
-        final var preferences = PreferencesHandler.getInstance();
-        final var dbPath = preferences.getAppFolder().resolve("db/fingerprints.db");
-        properties.setUrl("jdbc:p6spy:sqlite:" + dbPath.toAbsolutePath());
-        return properties.initializeDataSourceBuilder().build();
-      }
-
-    /*******************************************************************************************************************
-     *
      * Enables the DCI role annotation scanner.
-     *
      ******************************************************************************************************************/
     @Bean
     public AnnotationSpringSystemRoleFactory annotationSpringSystemRoleFactory()
       {
         return (AnnotationSpringSystemRoleFactory)SystemRoleFactory.getInstance();
+      }
+
+    /*******************************************************************************************************************
+     *
+     ******************************************************************************************************************/
+    @Bean
+    public PreferencesHandler preferencesHandler()
+      {
+        return PreferencesHandler.getInstance();
       }
   }
