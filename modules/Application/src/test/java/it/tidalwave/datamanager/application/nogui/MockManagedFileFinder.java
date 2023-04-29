@@ -27,65 +27,81 @@
 package it.tidalwave.datamanager.application.nogui;
 
 import jakarta.annotation.Nonnull;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Consumer;
 import java.io.Serial;
 import it.tidalwave.util.Pair;
 import it.tidalwave.util.spi.HierarchicFinderSupport;
 import it.tidalwave.datamanager.model.DataManager;
 import it.tidalwave.datamanager.model.ManagedFile;
 import lombok.AllArgsConstructor;
+import static it.tidalwave.util.CollectionUtils.concat;
+import static lombok.AccessLevel.PRIVATE;
 
 /***********************************************************************************************************************
+ *
+ * A mock for {@link it.tidalwave.datamanager.model.DataManager.ManagedFileFinder}.
  *
  * @author      Fabrizio Giudici
  *
  **********************************************************************************************************************/
-@AllArgsConstructor
+@AllArgsConstructor(access = PRIVATE)
 public class MockManagedFileFinder
         extends HierarchicFinderSupport<ManagedFile, MockManagedFileFinder>
         implements DataManager.ManagedFileFinder
   {
     @Serial private static final long serialVersionUID = 0L;
 
+    private final Holder<MockManagedFileFinder> holder;
+
     @Nonnull
     private final List<ManagedFile> result;
 
     @Nonnull
-    private final List<Pair<SortCriterion, SortDirection>> sorters;
+    public final List<Pair<SortCriterion, SortDirection>> sorters;
 
     @Nonnull
-    private final Consumer<String> fingerprintConsumer;
+    public final Optional<String> fingerprint;
+
+    public MockManagedFileFinder (@Nonnull final Holder<MockManagedFileFinder> holder,
+                                  @Nonnull final List<ManagedFile> result)
+      {
+        this.holder = holder;
+        this.result = result;
+        this.sorters = new ArrayList<>();
+        this.fingerprint = Optional.empty();
+      }
 
     public MockManagedFileFinder (@Nonnull final MockManagedFileFinder other, @Nonnull final Object override)
       {
         super(other, override);
         final var source = getSource(MockManagedFileFinder.class, other, override);
+        this.holder = source.holder;
         this.result = source.result;
         this.sorters = source.sorters;
-        this.fingerprintConsumer = source.fingerprintConsumer;
+        this.fingerprint = source.fingerprint;
+        holder.set(this);
       }
 
     @Override @Nonnull
     public MockManagedFileFinder sort (@Nonnull final SortCriterion criterion, @Nonnull final SortDirection direction)
       {
-        // just accumulate sorters for assertions
-        sorters.add(Pair.of(criterion, direction));
-        return clonedWith(new MockManagedFileFinder(result, sorters, fingerprintConsumer));
+        return clonedWith(new MockManagedFileFinder(holder,
+                                                    result,
+                                                    concat(sorters, Pair.of(criterion, direction)),
+                                                    fingerprint));
+      }
+
+    @Nonnull
+    public DataManager.ManagedFileFinder withFingerprint (@Nonnull final Optional<String> fingerprint)
+      {
+        return clonedWith(new MockManagedFileFinder(holder, result, sorters, fingerprint));
       }
 
     @Override @Nonnull
     protected List<ManagedFile> computeResults()
       {
         return result;
-      }
-
-    @Nonnull
-    public DataManager.ManagedFileFinder withFingerprint (@Nonnull final Optional<String> fingerprint)
-      {
-        // just accumulate for assertions
-        fingerprint.ifPresent(this.fingerprintConsumer);
-        return clonedWith(new MockManagedFileFinder(result, sorters, fingerprintConsumer));
       }
   }

@@ -27,18 +27,16 @@
 package it.tidalwave.datamanager.application.nogui.impl;
 
 import jakarta.annotation.Nonnull;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Consumer;
 import java.util.stream.Stream;
 import java.nio.file.Path;
-import it.tidalwave.util.Finder;
 import it.tidalwave.util.IdFactory;
 import it.tidalwave.util.Pair;
 import it.tidalwave.datamanager.model.DataManager;
 import it.tidalwave.datamanager.model.Fingerprint;
 import it.tidalwave.datamanager.model.ManagedFile;
+import it.tidalwave.datamanager.application.nogui.Holder;
 import it.tidalwave.datamanager.application.nogui.MockDataManagerPresentation;
 import it.tidalwave.datamanager.application.nogui.MockManagedFileFinder;
 import org.testng.annotations.BeforeMethod;
@@ -63,9 +61,7 @@ public class DefaultDataManagerPresentationControlTest
 
     private MockDataManagerPresentation presentation;
 
-    private List<Pair<Finder.SortCriterion, Finder.SortDirection>> sorters;
-
-    private Consumer<String> fingerprintConsumer;
+    private Holder<MockManagedFileFinder> finder;
 
     private final IdFactory idFactory = IdFactory.MOCK;
 
@@ -73,15 +69,12 @@ public class DefaultDataManagerPresentationControlTest
     @BeforeMethod
     public void setup()
       {
-        sorters = new ArrayList<>();
-        fingerprintConsumer = mock(Consumer.class);
-        final var finder = new MockManagedFileFinder(List.of(
+        finder = Holder.of(h -> new MockManagedFileFinder(h, List.of(
                 mockManagedFile("/foo/bar/1","1:f1", "1:f2"),
-                mockManagedFile("/foo/bar/2","2:f1", "2:f2", "2:f3")),
-            sorters, fingerprintConsumer);
+                mockManagedFile("/foo/bar/2","2:f1", "2:f2", "2:f3"))));
         dataManager = mock(DataManager.class);
         presentation = new MockDataManagerPresentation();
-        when(dataManager.findManagedFiles()).thenReturn(finder);
+        when(dataManager.findManagedFiles()).thenReturn(finder.f);
         underTest = new DefaultDataManagerPresentationControl(dataManager, presentation);
       }
 
@@ -92,7 +85,7 @@ public class DefaultDataManagerPresentationControlTest
         // when
         underTest.renderManagedFiles(false, Optional.empty(), Optional.empty(), Optional.empty(), false);
         // then
-        assertThat(sorters, is(List.of(Pair.of(by("path"), ASCENDING))));
+        assertThat(finder.f.sorters, is(List.of(Pair.of(by("path"), ASCENDING))));
         assertThat(presentation.getObjects(), is(List.of("/foo/bar/1", "/foo/bar/2")));
       }
 
@@ -103,10 +96,10 @@ public class DefaultDataManagerPresentationControlTest
         // when
         underTest.renderManagedFiles(true, Optional.empty(), Optional.empty(), Optional.empty(), false);
         // then
-        assertThat(sorters, is(List.of(Pair.of(by("path"), ASCENDING))));
+        assertThat(finder.f.sorters, is(List.of(Pair.of(by("path"), ASCENDING))));
         assertThat(presentation.getObjects(), is(List.of("/foo/bar/1", "1:f1", "1:f2",
                                                          "/foo/bar/2", "2:f1", "2:f2", "2:f3")));
-        verifyNoInteractions(fingerprintConsumer);
+        assertThat(finder.f.fingerprint, is(Optional.empty()));
       }
 
     /******************************************************************************************************************/
@@ -116,9 +109,9 @@ public class DefaultDataManagerPresentationControlTest
         // when
         underTest.renderManagedFiles(false, Optional.of(1), Optional.empty(), Optional.empty(), false);
         // then
-        assertThat(sorters, is(List.of(Pair.of(by("path"), ASCENDING))));
+        assertThat(finder.f.sorters, is(List.of(Pair.of(by("path"), ASCENDING))));
         assertThat(presentation.getObjects(), is(List.of("/foo/bar/1")));
-        verifyNoInteractions(fingerprintConsumer);
+        assertThat(finder.f.fingerprint, is(Optional.empty()));
       }
 
     /******************************************************************************************************************/
@@ -128,9 +121,9 @@ public class DefaultDataManagerPresentationControlTest
         // when
         underTest.renderManagedFiles(false, Optional.empty(), Optional.of(".*2"), Optional.empty(), false);
         // then
-        assertThat(sorters, is(List.of(Pair.of(by("path"), ASCENDING))));
+        assertThat(finder.f.sorters, is(List.of(Pair.of(by("path"), ASCENDING))));
         assertThat(presentation.getObjects(), is(List.of("/foo/bar/2")));
-        verifyNoInteractions(fingerprintConsumer);
+        assertThat(finder.f.fingerprint, is(Optional.empty()));
       }
 
     /******************************************************************************************************************/
@@ -140,9 +133,9 @@ public class DefaultDataManagerPresentationControlTest
         // when
         underTest.renderManagedFiles(false, Optional.empty(), Optional.empty(), Optional.of("2:f2"), false);
         // then
-        assertThat(sorters, is(List.of(Pair.of(by("path"), ASCENDING))));
+        assertThat(finder.f.sorters, is(List.of(Pair.of(by("path"), ASCENDING))));
         // don't assert results, they are not processed by the class under test
-        verify(fingerprintConsumer).accept("2:f2");
+        assertThat(finder.f.fingerprint, is(Optional.of("2:f2")));
       }
 
     /******************************************************************************************************************/
