@@ -11,4 +11,5 @@ release.properties
 .rej
 *.iml
 *.idea
+.run
 .DS_Store

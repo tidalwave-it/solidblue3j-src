@@ -41,7 +41,7 @@ import static it.tidalwave.util.spring.jpa.JpaRepositoryFinder.JpaSorter;
  *
  * A specialisation of {@link JpaRepository} to support {@code Finder}s. Must be configured with annotation:
  * <pre>
- *   @EnableJpaRepositories(repositoryBaseClass = DefaultFinderJpaRepository.class)
+ *   {@code @EnableJpaRepositories(repositoryBaseClass} = DefaultFinderJpaRepository.class)
  * </pre>
  *
  * @param   <E> the static type of the JPA entity

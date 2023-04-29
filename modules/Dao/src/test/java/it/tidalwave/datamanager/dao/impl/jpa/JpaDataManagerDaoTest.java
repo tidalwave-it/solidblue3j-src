@@ -176,7 +176,7 @@ public class JpaDataManagerDaoTest extends AbstractTestNGSpringContextTests
         final var paths = new Random(4)
                 .ints(0x2540, 0xffff)
                 .limit(10)
-                .mapToObj(i -> "/foo/bar/%x".formatted(i))
+                .mapToObj("/foo/bar/%x"::formatted)
                 .toList();
         final var counts = new Random(5).ints(0, 10).iterator();
         return paths.stream().map(_f(p -> createTestEntity(p, counts.next()))).toList();

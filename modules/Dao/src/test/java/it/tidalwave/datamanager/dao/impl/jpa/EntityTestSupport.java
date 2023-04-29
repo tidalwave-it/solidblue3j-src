@@ -43,9 +43,10 @@ import static org.testng.Assert.*;
 
 /***********************************************************************************************************************
  *
- * Adapted from https://vladmihalcea.com/how-to-implement-equals-and-hashcode-using-the-jpa-entity-identifier/
+ * Adapted from
+ * <a href="https://vladmihalcea.com/how-to-implement-equals-and-hashcode-using-the-jpa-entity-identifier/">...</a>
  *
- * @author      Fabrizio Giudici
+ * @author Fabrizio Giudici
  *
  **********************************************************************************************************************/
 public class EntityTestSupport extends AbstractTestNGSpringContextTests
