@@ -27,59 +27,54 @@
 package it.tidalwave.datamanager.application.nogui.args;
 
 import jakarta.annotation.Nonnull;
-import jakarta.inject.Provider;
-import java.util.List;
+import java.util.Set;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
-import org.springframework.core.annotation.Order;
-import org.springframework.stereotype.Component;
 import it.tidalwave.datamanager.application.nogui.DataManagerPresentation;
 import lombok.RequiredArgsConstructor;
-import static org.springframework.core.Ordered.LOWEST_PRECEDENCE;
+import static it.tidalwave.datamanager.application.nogui.args.ArgumentsUtils.findBadOptions;
+import static java.util.stream.Collectors.*;
 
 /***********************************************************************************************************************
- *
- * The command line args interpreter that prints usage for all commands.
  *
  * @author      Fabrizio Giudici
  *
  **********************************************************************************************************************/
-@Component @Order(LOWEST_PRECEDENCE) @RequiredArgsConstructor
-public class UsageArgsInterpreter implements ApplicationRunner
+@RequiredArgsConstructor
+public abstract class ArgsInterpreterSupport implements ApplicationRunner
   {
     @Nonnull
-    private final DataManagerPresentation presentation;
+    private final String command;
 
     @Nonnull
-    private final Provider<List<UsageCapable>> usageCapables;
+    private final Set<String> validOptions;
 
-    private boolean printUsage = true;
+    @Nonnull
+    private final DataManagerPresentation presentation;
 
     /*******************************************************************************************************************
      * {@inheritDoc}
      ******************************************************************************************************************/
     @Override
-    public void run (@Nonnull final ApplicationArguments args)
+    public final void run (@Nonnull final ApplicationArguments args)
       {
-        if (printUsage || args.containsOption("help"))
+        if (args.getNonOptionArgs().contains(command))
           {
-            if (args.getSourceArgs().length > 0)
-              {
-                presentation.notifyError("Syntax error: " + String.join(" ", args.getSourceArgs()));
-              }
+            final var bad = findBadOptions(args, validOptions);
 
-            presentation.output("Usage:");
-            usageCapables.get().forEach(UsageCapable::printUsage);
+            if (!bad.isEmpty())
+              {
+                presentation.notifyError("Invalid options: " + bad.stream().map(s -> "--" + s).collect(joining()));
+              }
+            else
+              {
+                doRun(args);
+              }
           }
       }
 
     /*******************************************************************************************************************
      *
-     * Disables usage printing.
-     *
      ******************************************************************************************************************/
-    public void disableUsage()
-      {
-        printUsage = false;
-      }
+    protected abstract void doRun (@Nonnull ApplicationArguments args);
   }

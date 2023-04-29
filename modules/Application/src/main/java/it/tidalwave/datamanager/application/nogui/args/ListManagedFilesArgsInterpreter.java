@@ -29,15 +29,12 @@ package it.tidalwave.datamanager.application.nogui.args;
 import jakarta.annotation.Nonnull;
 import java.util.Set;
 import org.springframework.boot.ApplicationArguments;
-import org.springframework.boot.ApplicationRunner;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 import it.tidalwave.datamanager.application.nogui.DataManagerPresentation;
 import it.tidalwave.datamanager.application.nogui.DataManagerPresentationControl;
-import lombok.RequiredArgsConstructor;
 import static it.tidalwave.datamanager.application.nogui.DataManagerPresentationControl.Options.with;
 import static it.tidalwave.datamanager.application.nogui.args.ArgumentsUtils.*;
-import static java.util.stream.Collectors.*;
 
 /***********************************************************************************************************************
  *
@@ -46,13 +43,18 @@ import static java.util.stream.Collectors.*;
  * @author      Fabrizio Giudici
  *
  **********************************************************************************************************************/
-@Component @Order(0) @RequiredArgsConstructor
-public class ListManagedFilesArgsInterpreter implements ApplicationRunner, UsageCapable
+@Component @Order(0)
+public class ListManagedFilesArgsInterpreter extends ArgsInterpreterSupport implements UsageCapable
   {
-    private static final Set<String> VALID_OPTIONS = Set.of("fingerprints", "max", "regex", "missing", "fingerprint");
+    private static final String COMMAND = "list-files";
+    private static final String O_FINGERPRINTS = "fingerprints";
+    private static final String O_MAX = "max";
+    private static final String O_REGEX = "regex";
+    private static final String O_FINGERPRINT = "fingerprint";
+    private static final String O_MISSING = "missing";
 
     @Nonnull
-    private final DataManagerPresentationControl presentationController;
+    private final DataManagerPresentationControl presentationControl;
 
     @Nonnull
     private final DataManagerPresentation presentation;
@@ -63,40 +65,40 @@ public class ListManagedFilesArgsInterpreter implements ApplicationRunner, Usage
     /*******************************************************************************************************************
      * {@inheritDoc}
      ******************************************************************************************************************/
-    @Override
-    public void run (@Nonnull final ApplicationArguments args)
+    public ListManagedFilesArgsInterpreter (@Nonnull final DataManagerPresentationControl presentationControl,
+                                            @Nonnull final DataManagerPresentation presentation,
+                                            @Nonnull final UsageArgsInterpreter usageArgsInterpreter)
       {
-        if (args.getNonOptionArgs().contains("list-files"))
+        super(COMMAND, Set.of(O_FINGERPRINTS, O_MAX, O_REGEX, O_MISSING, O_FINGERPRINT), presentation);
+        this.presentationControl = presentationControl;
+        this.presentation = presentation;
+        this.usageArgsInterpreter = usageArgsInterpreter;
+      }
+
+    /*******************************************************************************************************************
+     * {@inheritDoc}
+     ******************************************************************************************************************/
+    @Override
+    protected void doRun (@Nonnull final ApplicationArguments args)
+      {
+        final var fingerprints = args.containsOption(O_FINGERPRINTS);
+        final var max = getIntOption(args, O_MAX);
+        final var regex = getStringOption(args, O_REGEX);
+        final var fingerprint = getStringOption(args, O_FINGERPRINT);
+        final var missingFiles = args.containsOption(O_MISSING);
+
+        if ((regex.isPresent() || missingFiles) && max.isPresent())
           {
-            final var bad = findBadOptions(args, VALID_OPTIONS);
-
-            if (!bad.isEmpty())
-              {
-                presentation.notifyError("Invalid options: " + bad.stream().map(s -> "--" + s).collect(joining()));
-              }
-            else
-              {
-                final var fingerprints = args.containsOption("fingerprints");
-                final var max = getIntOption(args, "max");
-                final var regex = getStringOption(args, "regex");
-                final var fingerprint = getStringOption(args, "fingerprint");
-                final var missingFiles = args.containsOption("missing");
-
-                if ((regex.isPresent() || missingFiles) && max.isPresent())
-                  {
-                    presentation.notifyError("--max cannot be used with --regex or --missing");
-                  }
-                else
-                  {
-                    usageArgsInterpreter.disableUsage();
-                    presentationController.renderManagedFiles(
-                            with().renderFingerprints(fingerprints)
-                                  .max(max)
-                                  .regex(regex)
-                                  .fingerprint(fingerprint)
-                                  .missingFiles(missingFiles));
-                  }
-              }
+            presentation.notifyError("--%s cannot be used with --%s or --%s".formatted(O_MAX, O_REGEX, O_MISSING));
+          }
+        else
+          {
+            usageArgsInterpreter.disableUsage();
+            presentationControl.renderManagedFiles(with().renderFingerprints(fingerprints)
+                                                         .max(max)
+                                                         .regex(regex)
+                                                         .fingerprint(fingerprint)
+                                                         .missingFiles(missingFiles));
           }
       }
 
@@ -107,15 +109,15 @@ public class ListManagedFilesArgsInterpreter implements ApplicationRunner, Usage
     public void printUsage()
       {
         presentation.output("""
-            Usage: solidblue3 list-files [--max=<n>] [--regex=<regex>] [--fingerprint=<value> [--missing] [--fingerprints]
-                              list files on the console
-                              --max=<n>               the max number of files to list
-                              --regex=<regex>         a filter for the files to list
-                              --fingerprint=<value>   filter file(s) with that fingerprint
-                              --missing               only list files no more in the filesystem
-                              --fingerprints          also render fingerprints
-                              
-                              --max cannot be used with --regex and --missing
-            """);
+            solidblue3 %1$s [--%2$s=<n>] [--%3$s=<regex>] [--%4$s=<value> [--%5$s] [--%6$s]
+                       list files on the console
+                       --%2$s=<n>               the max number of files to list
+                       --%3$s=<regex>         a filter for the files to list
+                       --%4$s=<value>   filter file(s) with that fingerprint
+                       --%5$s               only list files no more in the filesystem
+                       --%6$s          also render fingerprints
+                      
+                       --max cannot be used with --regex and --missing
+            """.formatted("list-files", O_MAX, O_REGEX, O_FINGERPRINT, O_MISSING, O_FINGERPRINTS));
       }
   }
