@@ -30,11 +30,12 @@ import jakarta.annotation.Nonnull;
 import java.util.List;
 import org.springframework.boot.DefaultApplicationArguments;
 import it.tidalwave.datamanager.application.nogui.DataManagerPresentationControl;
+import it.tidalwave.datamanager.application.nogui.DataManagerPresentationControl.Options;
 import it.tidalwave.datamanager.application.nogui.MockDataManagerPresentation;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
-import static it.tidalwave.datamanager.application.nogui.DataManagerPresentationControl.*;
+import static it.tidalwave.datamanager.application.nogui.DataManagerPresentationControl.Options.*;
 import static org.mockito.Mockito.*;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -58,7 +59,7 @@ public class ListManagedFilesArgsInterpreterTest
     @BeforeMethod
     public void setup()
       {
-        presentationController = mock(DataManagerPresentationControl.class);
+        presentationController = mock(DataManagerPresentationControl.class, CALLS_REAL_METHODS);
         presentation = new MockDataManagerPresentation();
         usageArgsInterpreter = mock(UsageArgsInterpreter.class);
         underTest = new ListManagedFilesArgsInterpreter(presentationController, presentation, usageArgsInterpreter);
@@ -78,12 +79,13 @@ public class ListManagedFilesArgsInterpreterTest
 
     /******************************************************************************************************************/
     @Test(dataProvider = "argsAndOptions")
-    public void must_render_data (@Nonnull final List<String> args, @Nonnull final Options expectedOptions)
+    public void must_render_data (@Nonnull final List<String> args, @Nonnull final Options.Builder expectedOptions)
       {
         // when
         underTest.run(new DefaultApplicationArguments(args.toArray(new String[0])));
         // then
-        verify(presentationController).renderManagedFiles(expectedOptions);
+        verify(presentationController).renderManagedFiles(any(Options.Builder.class));
+        verify(presentationController).renderManagedFiles(expectedOptions.build());
         verifyNoMoreInteractions(presentationController);
         verify(usageArgsInterpreter).disableUsage();
       }

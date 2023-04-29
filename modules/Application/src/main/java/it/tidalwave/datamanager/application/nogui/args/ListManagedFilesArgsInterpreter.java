@@ -35,7 +35,7 @@ import org.springframework.stereotype.Component;
 import it.tidalwave.datamanager.application.nogui.DataManagerPresentation;
 import it.tidalwave.datamanager.application.nogui.DataManagerPresentationControl;
 import lombok.RequiredArgsConstructor;
-import static it.tidalwave.datamanager.application.nogui.DataManagerPresentationControl.with;
+import static it.tidalwave.datamanager.application.nogui.DataManagerPresentationControl.Options.with;
 import static it.tidalwave.datamanager.application.nogui.args.ArgumentsUtils.*;
 import static java.util.stream.Collectors.*;
 

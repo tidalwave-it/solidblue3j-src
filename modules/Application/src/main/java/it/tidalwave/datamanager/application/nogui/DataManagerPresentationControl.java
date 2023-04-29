@@ -28,11 +28,11 @@ package it.tidalwave.datamanager.application.nogui;
 
 import jakarta.annotation.Nonnull;
 import java.util.Optional;
-import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Builder.Default;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
-import lombok.With;
-import static lombok.AccessLevel.PRIVATE;
+import lombok.experimental.Tolerate;
 
 /***********************************************************************************************************************
  *
@@ -44,99 +44,72 @@ import static lombok.AccessLevel.PRIVATE;
  **********************************************************************************************************************/
 public interface DataManagerPresentationControl
   {
-    @AllArgsConstructor @With(PRIVATE) @ToString @EqualsAndHashCode
+    @Builder(builderClassName = "Builder") @ToString @EqualsAndHashCode
     public static class Options
       {
+        public static class Builder
+          {
+            @Nonnull @Tolerate
+            public Builder renderFingerprints()
+              {
+                return renderFingerprints(true);
+              }
+
+            @Nonnull @Tolerate
+            public Builder max (final int max)
+              {
+                return max(Optional.of(max));
+              }
+
+            @Nonnull @Tolerate
+            public Builder regex (@Nonnull final String regex)
+              {
+                return regex(Optional.of(regex));
+              }
+
+            @Nonnull @Tolerate
+            public Builder fingerprint (@Nonnull final String fingerprint)
+              {
+                return fingerprint(Optional.of(fingerprint));
+              }
+
+            @Nonnull @Tolerate
+            public Builder missingFiles()
+              {
+                return missingFiles(true);
+              }
+          }
+
         /** Render fingerprints too. */
         public final boolean renderFingerprints;
 
         /** The maximum number of items to render. */
-        @Nonnull
-        public final Optional<Integer> max;
+        @Nonnull @Default
+        public final Optional<Integer> max = Optional.empty();
 
         /** A regex filter. */
-        @Nonnull
-        public final Optional<String> regex;
+        @Nonnull @Default
+        public final Optional<String> regex = Optional.empty();
 
         /** Filter files having this fingerprint. */
-        @Nonnull
-        public final Optional<String> fingerprint;
+        @Nonnull @Default
+        public final Optional<String> fingerprint = Optional.empty();
 
         /** Filter output only to files no more present in the filesystem. */
         public final boolean missingFiles;
 
+        // Syntactic sugar
         @Nonnull
-        public Options renderFingerprints()
+        public static Options.Builder with()
           {
-            return withRenderFingerprints(true);
+            return builder();
           }
 
         @Nonnull
-        public Options renderFingerprints (final boolean renderFingerprints)
+        public static Options.Builder withDefaultOptions()
           {
-            return withRenderFingerprints(renderFingerprints);
+            return builder();
           }
-
-        @Nonnull
-        public Options max (@Nonnull final Optional<Integer> max)
-          {
-            return withMax(max);
-          }
-
-        @Nonnull
-        public Options max (final int max)
-          {
-            return withMax(Optional.of(max));
-          }
-
-        @Nonnull
-        public Options regex (@Nonnull final Optional<String> regex)
-          {
-            return withRegex(regex);
-          }
-
-        @Nonnull
-        public Options regex (@Nonnull final String regex)
-          {
-            return withRegex(Optional.of(regex));
-          }
-
-        @Nonnull
-        public Options fingerprint (@Nonnull final Optional<String> fingerprint)
-          {
-            return withFingerprint(fingerprint);
-          }
-
-        @Nonnull
-        public Options fingerprint (@Nonnull final String fingerprint)
-          {
-            return withFingerprint(Optional.of(fingerprint));
-          }
-
-        @Nonnull
-        public Options missingFiles()
-          {
-            return withMissingFiles(true);
-          }
-
-        @Nonnull
-        public Options missingFiles (final boolean missingFiles)
-          {
-            return withMissingFiles(missingFiles);
-          }
-      }
-
-    @Nonnull
-    public static Options with()
-      {
-        return new Options(false, Optional.empty(), Optional.empty(), Optional.empty(), false);
-      }
-
-    // Syntactic sugar
-    @Nonnull
-    public static Options withDefaultOptions()
-      {
-        return with();
       }
 
     /*******************************************************************************************************************
@@ -146,7 +119,19 @@ public interface DataManagerPresentationControl
      ******************************************************************************************************************/
     public default void renderManagedFiles()
       {
-        renderManagedFiles(withDefaultOptions());
+        renderManagedFiles(Options.withDefaultOptions());
+      }
+
+    /*******************************************************************************************************************
+     *
+     * Render managed files with the specified options.
+     *
+     * @param   options   the options
+     *
+     ******************************************************************************************************************/
+    public default void renderManagedFiles (@Nonnull final Options.Builder options)
+      {
+        renderManagedFiles(options.build());
       }
 
     /*******************************************************************************************************************

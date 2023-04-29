@@ -41,7 +41,7 @@ import it.tidalwave.datamanager.application.nogui.MockDataManagerPresentation;
 import it.tidalwave.datamanager.application.nogui.MockManagedFileFinder;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
-import static it.tidalwave.datamanager.application.nogui.DataManagerPresentationControl.with;
+import static it.tidalwave.datamanager.application.nogui.DataManagerPresentationControl.Options.with;
 import static it.tidalwave.util.Finder.SortDirection.ASCENDING;
 import static it.tidalwave.util.spring.jpa.JpaRepositoryFinder.by;
 import static org.mockito.Mockito.*;
