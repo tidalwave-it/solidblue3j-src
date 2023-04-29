@@ -28,6 +28,11 @@ package it.tidalwave.datamanager.application.nogui;
 
 import jakarta.annotation.Nonnull;
 import java.util.Optional;
+import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
+import lombok.With;
+import static lombok.AccessLevel.PRIVATE;
 
 /***********************************************************************************************************************
  *
@@ -39,20 +44,117 @@ import java.util.Optional;
  **********************************************************************************************************************/
 public interface DataManagerPresentationControl
   {
+    @AllArgsConstructor @With(PRIVATE) @ToString @EqualsAndHashCode
+    public static class Options
+      {
+        /** Render fingerprints too. */
+        public final boolean renderFingerprints;
+
+        /** The maximum number of items to render. */
+        @Nonnull
+        public final Optional<Integer> max;
+
+        /** A regex filter. */
+        @Nonnull
+        public final Optional<String> regex;
+
+        /** Filter files having this fingerprint. */
+        @Nonnull
+        public final Optional<String> fingerprint;
+
+        /** Filter output only to files no more present in the filesystem. */
+        public final boolean missingFiles;
+
+        @Nonnull
+        public Options renderFingerprints()
+          {
+            return withRenderFingerprints(true);
+          }
+
+        @Nonnull
+        public Options renderFingerprints (final boolean renderFingerprints)
+          {
+            return withRenderFingerprints(renderFingerprints);
+          }
+
+        @Nonnull
+        public Options max (@Nonnull final Optional<Integer> max)
+          {
+            return withMax(max);
+          }
+
+        @Nonnull
+        public Options max (final int max)
+          {
+            return withMax(Optional.of(max));
+          }
+
+        @Nonnull
+        public Options regex (@Nonnull final Optional<String> regex)
+          {
+            return withRegex(regex);
+          }
+
+        @Nonnull
+        public Options regex (@Nonnull final String regex)
+          {
+            return withRegex(Optional.of(regex));
+          }
+
+        @Nonnull
+        public Options fingerprint (@Nonnull final Optional<String> fingerprint)
+          {
+            return withFingerprint(fingerprint);
+          }
+
+        @Nonnull
+        public Options fingerprint (@Nonnull final String fingerprint)
+          {
+            return withFingerprint(Optional.of(fingerprint));
+          }
+
+        @Nonnull
+        public Options missingFiles()
+          {
+            return withMissingFiles(true);
+          }
+
+        @Nonnull
+        public Options missingFiles (final boolean missingFiles)
+          {
+            return withMissingFiles(missingFiles);
+          }
+      }
+
+    @Nonnull
+    public static Options with()
+      {
+        return new Options(false, Optional.empty(), Optional.empty(), Optional.empty(), false);
+      }
+
+    // Syntactic sugar
+    @Nonnull
+    public static Options withDefaultOptions()
+      {
+        return with();
+      }
+
+    /*******************************************************************************************************************
+     *
+     * Render managed files.
+     *
+     ******************************************************************************************************************/
+    public default void renderManagedFiles()
+      {
+        renderManagedFiles(withDefaultOptions());
+      }
+
     /*******************************************************************************************************************
      *
      * Render managed files with the specified options.
      *
-     * @param   fingerprints    render fingerprints too
-     * @param   max             the maximum number of items to render
-     * @param   regex           a regex filter
-     * @param   fingerprint     filters files having this fingerprint
-     * @param   missing         filter output only to files no more present in the filesystem
+     * @param   options   the options
      *
      ******************************************************************************************************************/
-    public void renderManagedFiles (boolean fingerprints,
-                                    @Nonnull Optional<Integer> max,
-                                    @Nonnull Optional<String> regex,
-                                    @Nonnull Optional<String> fingerprint,
-                                    boolean missing);
+    public void renderManagedFiles (@Nonnull Options options);
   }

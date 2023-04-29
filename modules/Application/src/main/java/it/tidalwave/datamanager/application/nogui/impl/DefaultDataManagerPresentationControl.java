@@ -28,7 +28,6 @@ package it.tidalwave.datamanager.application.nogui.impl;
 
 import jakarta.annotation.Nonnull;
 import java.util.List;
-import java.util.Optional;
 import java.util.function.Predicate;
 import java.nio.file.Files;
 import org.springframework.stereotype.Component;
@@ -65,28 +64,32 @@ public class DefaultDataManagerPresentationControl implements DataManagerPresent
      * {@inheritDoc}
      ******************************************************************************************************************/
     @Override
-    public void renderManagedFiles (final boolean renderFingerprints,
-                                    @Nonnull final Optional<Integer> max,
-                                    @Nonnull final Optional<String> regex,
-                                    @Nonnull final Optional<String> fingerprint,
-                                    final boolean missing)
+    public void renderManagedFiles (@Nonnull final Options options)
       {
-        final Predicate<ManagedFile> filter1 = __ -> true;
-        final var filter2 = regex.map(r -> filter1.and(mf -> mf.getPath().toString().matches(r))).orElse(filter1);
-        final var filter3 = !missing ? filter2 : filter2.and(mf -> !Files.exists(mf.getPath()));
-
         final RoleFactory<ManagedFile> rf =
-                o -> SimpleComposite.ofCloned(renderFingerprints ? o.getFingerprints() : List.of());
+                o -> SimpleComposite.ofCloned(options.renderFingerprints ? o.getFingerprints() : List.of());
 
         final var pm = dataManager.findManagedFiles()
-                                  .withFingerprint(fingerprint)
+                                  .withFingerprint(options.fingerprint)
                                   .sort(by("path"), ASCENDING)
-                                  .max(max)
+                                  .max(options.max)
                                   .stream()
-                                  .filter(filter3)
+                                  .filter(createPredicate(options))
                                   .map(m -> PresentationModel.of(m, rf))
                                   // .map(m -> m.as(_Presentable_).createPresentationModel(rf)) TODO breaks test
                                   .collect(toCompositePresentationModel());
         presentation.renderManagedFiles(pm);
+      }
+
+    /*******************************************************************************************************************
+     *
+     ******************************************************************************************************************/
+    @Nonnull
+    private static Predicate<ManagedFile> createPredicate (@Nonnull final Options options)
+      {
+        final Predicate<ManagedFile> filter1 = __ -> true;
+        final var filter2 =
+                options.regex.map(r -> filter1.and(mf -> mf.getPath().toString().matches(r))).orElse(filter1);
+        return !options.missingFiles ? filter2 : filter2.and(mf -> !Files.exists(mf.getPath()));
       }
   }

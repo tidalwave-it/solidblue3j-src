@@ -27,13 +27,14 @@
 package it.tidalwave.datamanager.application.nogui.args;
 
 import jakarta.annotation.Nonnull;
-import java.util.Optional;
+import java.util.List;
 import org.springframework.boot.DefaultApplicationArguments;
 import it.tidalwave.datamanager.application.nogui.DataManagerPresentationControl;
 import it.tidalwave.datamanager.application.nogui.MockDataManagerPresentation;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
+import static it.tidalwave.datamanager.application.nogui.DataManagerPresentationControl.*;
 import static org.mockito.Mockito.*;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -76,6 +77,18 @@ public class ListManagedFilesArgsInterpreterTest
       }
 
     /******************************************************************************************************************/
+    @Test(dataProvider = "argsAndOptions")
+    public void must_render_data (@Nonnull final List<String> args, @Nonnull final Options expectedOptions)
+      {
+        // when
+        underTest.run(new DefaultApplicationArguments(args.toArray(new String[0])));
+        // then
+        verify(presentationController).renderManagedFiles(expectedOptions);
+        verifyNoMoreInteractions(presentationController);
+        verify(usageArgsInterpreter).disableUsage();
+      }
+
+    /******************************************************************************************************************/
     @Test(dataProvider = "errorArgs")
     public void must_emit_error_when_both_max_and_filter (@Nonnull final String[] args)
       {
@@ -100,99 +113,18 @@ public class ListManagedFilesArgsInterpreterTest
       }
 
     /******************************************************************************************************************/
-    @Test
-    public void must_render_data()
+    @DataProvider
+    private static Object[][] argsAndOptions()
       {
-        // when
-        underTest.run(new DefaultApplicationArguments("list-files"));
-        // then
-        verify(presentationController).renderManagedFiles(false,
-                                                          Optional.empty(),
-                                                          Optional.empty(),
-                                                          Optional.empty(),
-                                                          false);
-        verifyNoMoreInteractions(presentationController);
-        verify(usageArgsInterpreter).disableUsage();
-      }
-
-    /******************************************************************************************************************/
-    @Test
-    public void must_render_data_with_max()
-      {
-        // when
-        underTest.run(new DefaultApplicationArguments("list-files", "--max=1"));
-        // then
-        verify(presentationController).renderManagedFiles(false,
-                                                          Optional.of(1),
-                                                          Optional.empty(),
-                                                          Optional.empty(),
-                                                          false);
-        verifyNoMoreInteractions(presentationController);
-        verify(usageArgsInterpreter).disableUsage();
-      }
-
-    /******************************************************************************************************************/
-    @Test
-    public void must_render_data_with_regex()
-      {
-        // when
-        underTest.run(new DefaultApplicationArguments("list-files", "--regex=.*2"));
-        // then
-        verify(presentationController).renderManagedFiles(false,
-                                                          Optional.empty(),
-                                                          Optional.of(".*2"),
-                                                          Optional.empty(),
-                                                          false);
-        verifyNoMoreInteractions(presentationController);
-        verify(usageArgsInterpreter).disableUsage();
-      }
-
-    /******************************************************************************************************************/
-    @Test
-    public void must_render_data_with_fingerprints()
-      {
-        // when
-        underTest.run(new DefaultApplicationArguments("list-files", "--fingerprints"));
-        // then
-        verify(presentationController).renderManagedFiles(true,
-                                                          Optional.empty(),
-                                                          Optional.empty(),
-                                                          Optional.empty(),
-                                                          false);
-        verifyNoMoreInteractions(presentationController);
-        verify(usageArgsInterpreter).disableUsage();
-      }
-
-    /******************************************************************************************************************/
-    @Test
-    public void must_render_data_with_fingerprint()
-      {
-        // when
-        underTest.run(new DefaultApplicationArguments("list-files", "--fingerprint=fp"));
-        // then
-        verify(presentationController).renderManagedFiles(false,
-                                                          Optional.empty(),
-                                                          Optional.empty(),
-                                                          Optional.of("fp"),
-                                                          false);
-        verifyNoMoreInteractions(presentationController);
-        verify(usageArgsInterpreter).disableUsage();
-      }
-
-    /******************************************************************************************************************/
-    @Test
-    public void must_render_data_with_missing()
-      {
-        // when
-        underTest.run(new DefaultApplicationArguments("list-files", "--missing"));
-        // then
-        verify(presentationController).renderManagedFiles(false,
-                                                          Optional.empty(),
-                                                          Optional.empty(),
-                                                          Optional.empty(),
-                                                          true);
-        verifyNoMoreInteractions(presentationController);
-        verify(usageArgsInterpreter).disableUsage();
+        return new Object[][]
+          {
+            { List.of("list-files"),                      withDefaultOptions()        },
+            { List.of("list-files", "--max=1"),           with().max(1)               },
+            { List.of("list-files", "--regex=.*2"),       with().regex(".*2")         },
+            { List.of("list-files", "--fingerprints"),    with().renderFingerprints() },
+            { List.of("list-files", "--fingerprint=fp"),  with().fingerprint("fp")    },
+            { List.of("list-files", "--missing"),         with().missingFiles()       }
+          };
       }
 
     /******************************************************************************************************************/

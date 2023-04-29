@@ -41,6 +41,7 @@ import it.tidalwave.datamanager.application.nogui.MockDataManagerPresentation;
 import it.tidalwave.datamanager.application.nogui.MockManagedFileFinder;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
+import static it.tidalwave.datamanager.application.nogui.DataManagerPresentationControl.with;
 import static it.tidalwave.util.Finder.SortDirection.ASCENDING;
 import static it.tidalwave.util.spring.jpa.JpaRepositoryFinder.by;
 import static org.mockito.Mockito.*;
@@ -83,7 +84,7 @@ public class DefaultDataManagerPresentationControlTest
     public void must_render_data()
       {
         // when
-        underTest.renderManagedFiles(false, Optional.empty(), Optional.empty(), Optional.empty(), false);
+        underTest.renderManagedFiles();
         // then
         assertThat(finder.f.sorters, is(List.of(Pair.of(by("path"), ASCENDING))));
         assertThat(presentation.getObjects(), is(List.of("/foo/bar/1", "/foo/bar/2")));
@@ -91,10 +92,10 @@ public class DefaultDataManagerPresentationControlTest
 
     /******************************************************************************************************************/
     @Test
-    public void must_render_data_with_fingerprint()
+    public void must_render_data_with_fingerprints()
       {
         // when
-        underTest.renderManagedFiles(true, Optional.empty(), Optional.empty(), Optional.empty(), false);
+        underTest.renderManagedFiles(with().renderFingerprints());
         // then
         assertThat(finder.f.sorters, is(List.of(Pair.of(by("path"), ASCENDING))));
         assertThat(presentation.getObjects(), is(List.of("/foo/bar/1", "1:f1", "1:f2",
@@ -107,7 +108,7 @@ public class DefaultDataManagerPresentationControlTest
     public void must_render_data_with_max()
       {
         // when
-        underTest.renderManagedFiles(false, Optional.of(1), Optional.empty(), Optional.empty(), false);
+        underTest.renderManagedFiles(with().max(1));
         // then
         assertThat(finder.f.sorters, is(List.of(Pair.of(by("path"), ASCENDING))));
         assertThat(presentation.getObjects(), is(List.of("/foo/bar/1")));
@@ -119,7 +120,7 @@ public class DefaultDataManagerPresentationControlTest
     public void must_render_data_with_regex()
       {
         // when
-        underTest.renderManagedFiles(false, Optional.empty(), Optional.of(".*2"), Optional.empty(), false);
+        underTest.renderManagedFiles(with().regex(".*2"));
         // then
         assertThat(finder.f.sorters, is(List.of(Pair.of(by("path"), ASCENDING))));
         assertThat(presentation.getObjects(), is(List.of("/foo/bar/2")));
@@ -128,10 +129,10 @@ public class DefaultDataManagerPresentationControlTest
 
     /******************************************************************************************************************/
     @Test
-    public void must_render_data_with_fingerprints()
+    public void must_render_data_with_fingerprint()
       {
         // when
-        underTest.renderManagedFiles(false, Optional.empty(), Optional.empty(), Optional.of("2:f2"), false);
+        underTest.renderManagedFiles(with().fingerprint("2:f2"));
         // then
         assertThat(finder.f.sorters, is(List.of(Pair.of(by("path"), ASCENDING))));
         // don't assert results, they are not processed by the class under test

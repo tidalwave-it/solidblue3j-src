@@ -35,6 +35,7 @@ import org.springframework.stereotype.Component;
 import it.tidalwave.datamanager.application.nogui.DataManagerPresentation;
 import it.tidalwave.datamanager.application.nogui.DataManagerPresentationControl;
 import lombok.RequiredArgsConstructor;
+import static it.tidalwave.datamanager.application.nogui.DataManagerPresentationControl.with;
 import static it.tidalwave.datamanager.application.nogui.args.ArgumentsUtils.*;
 import static java.util.stream.Collectors.*;
 
@@ -79,16 +80,21 @@ public class ListManagedFilesArgsInterpreter implements ApplicationRunner, Usage
                 final var max = getIntOption(args, "max");
                 final var regex = getStringOption(args, "regex");
                 final var fingerprint = getStringOption(args, "fingerprint");
-                final var missing = args.containsOption("missing");
+                final var missingFiles = args.containsOption("missing");
 
-                if ((regex.isPresent() || missing) && max.isPresent())
+                if ((regex.isPresent() || missingFiles) && max.isPresent())
                   {
                     presentation.notifyError("--max cannot be used with --regex or --missing");
                   }
                 else
                   {
                     usageArgsInterpreter.disableUsage();
-                    presentationController.renderManagedFiles(fingerprints, max, regex, fingerprint, missing);
+                    presentationController.renderManagedFiles(
+                            with().renderFingerprints(fingerprints)
+                                  .max(max)
+                                  .regex(regex)
+                                  .fingerprint(fingerprint)
+                                  .missingFiles(missingFiles));
                   }
               }
           }
