@@ -45,7 +45,7 @@ import lombok.experimental.Tolerate;
 public interface DataManagerPresentationControl
   {
     @Builder(builderClassName = "Builder") @ToString @EqualsAndHashCode
-    public static class Options
+    public static class ManagedFileOptions
       {
         public static class Builder
           {
@@ -100,13 +100,13 @@ public interface DataManagerPresentationControl
 
         // Syntactic sugar
         @Nonnull
-        public static Options.Builder with()
+        public static ManagedFileOptions.Builder with()
           {
             return builder();
           }
 
         @Nonnull
-        public static Options.Builder withDefaultOptions()
+        public static ManagedFileOptions.Builder withDefaultOptions()
           {
             return builder();
           }
@@ -119,7 +119,7 @@ public interface DataManagerPresentationControl
      ******************************************************************************************************************/
     public default void renderManagedFiles()
       {
-        renderManagedFiles(Options.withDefaultOptions());
+        renderManagedFiles(ManagedFileOptions.withDefaultOptions());
       }
 
     /*******************************************************************************************************************
@@ -129,7 +129,7 @@ public interface DataManagerPresentationControl
      * @param   options   the options
      *
      ******************************************************************************************************************/
-    public default void renderManagedFiles (@Nonnull final Options.Builder options)
+    public default void renderManagedFiles (@Nonnull final ManagedFileOptions.Builder options)
       {
         renderManagedFiles(options.build());
       }
@@ -141,5 +141,5 @@ public interface DataManagerPresentationControl
      * @param   options   the options
      *
      ******************************************************************************************************************/
-    public void renderManagedFiles (@Nonnull Options options);
+    public void renderManagedFiles (@Nonnull ManagedFileOptions options);
   }

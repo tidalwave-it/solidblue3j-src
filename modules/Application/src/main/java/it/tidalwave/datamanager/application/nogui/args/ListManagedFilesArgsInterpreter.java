@@ -33,7 +33,7 @@ import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 import it.tidalwave.datamanager.application.nogui.DataManagerPresentation;
 import it.tidalwave.datamanager.application.nogui.DataManagerPresentationControl;
-import static it.tidalwave.datamanager.application.nogui.DataManagerPresentationControl.Options.with;
+import static it.tidalwave.datamanager.application.nogui.DataManagerPresentationControl.ManagedFileOptions.with;
 import static it.tidalwave.datamanager.application.nogui.args.ArgumentsUtils.*;
 
 /***********************************************************************************************************************

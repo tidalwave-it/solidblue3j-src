@@ -56,9 +56,9 @@ public class TerminalDataManagerPresentationTest
 
     /******************************************************************************************************************/
     @Nonnull
-    private static PresentationModel createPm (@Nonnull final String display, @Nonnull final String ... fingerprints)
+    private static PresentationModel createPm (@Nonnull final String display, @Nonnull final String ... strings)
       {
-        final var fp = Stream.of(fingerprints)
+        final var fp = Stream.of(strings)
                              .map(v -> PresentationModel.of("",  Displayable.of(v)))
                              .toList();
         return PresentationModel.of("", List.of(Displayable.of(display), SimpleComposite.ofCloned(fp)));

@@ -65,7 +65,7 @@ public class DefaultDataManagerPresentationControl implements DataManagerPresent
      * {@inheritDoc}
      ******************************************************************************************************************/
     @Override
-    public void renderManagedFiles (@Nonnull final Options options)
+    public void renderManagedFiles (@Nonnull final ManagedFileOptions options)
       {
         final RoleFactory<ManagedFile> rf =
                 o -> SimpleComposite.ofCloned(options.renderFingerprints ? o.getFingerprints() : List.of());
@@ -86,7 +86,7 @@ public class DefaultDataManagerPresentationControl implements DataManagerPresent
      *
      ******************************************************************************************************************/
     @Nonnull
-    private static Predicate<ManagedFile> createPredicate (@Nonnull final Options options)
+    private static Predicate<ManagedFile> createPredicate (@Nonnull final ManagedFileOptions options)
       {
         final Predicate<ManagedFile> filter1 = __ -> true;
         final var filter2 =
