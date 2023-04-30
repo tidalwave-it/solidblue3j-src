@@ -27,20 +27,28 @@
 package it.tidalwave.util.spring.jpa;
 
 import jakarta.annotation.Nonnull;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Function;
 import java.io.Serial;
+import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.Predicate;
+import jakarta.persistence.criteria.Root;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import it.tidalwave.util.Finder;
 import it.tidalwave.util.spi.HierarchicFinderSupport;
-import it.tidalwave.util.spring.jpa.FinderJpaRepository.QueryParameters;
 import lombok.AllArgsConstructor;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import static it.tidalwave.util.CollectionUtils.concat;
 import static lombok.AccessLevel.PRIVATE;
 
 /***********************************************************************************************************************
  *
- * A {@link Finder} that works with a {@link FinderJpaRepository} and is capable of converting JPA entities to model.
+ * A {@link Finder} that works with a repository extending {@link JpaSpecificationExecutor}.
  *
  * @param   <M> the static type of the model object
  * @param   <E> the static type of the JPA entity
@@ -51,7 +59,7 @@ import static lombok.AccessLevel.PRIVATE;
  *
  **********************************************************************************************************************/
 @AllArgsConstructor(access = PRIVATE) @Slf4j
-public class JpaRepositoryFinder<M, E, F extends Finder<M>, R extends FinderJpaRepository<E, ?>>
+public class JpaSpecificationFinder<M, E, F extends Finder<M>, R extends JpaSpecificationExecutor<E>>
         extends HierarchicFinderSupport<M, F>
   {
     @Serial private static final long serialVersionUID = 0L;
@@ -60,7 +68,7 @@ public class JpaRepositoryFinder<M, E, F extends Finder<M>, R extends FinderJpaR
     protected final R repository;
 
     @Nonnull
-    protected final EntityModelMapper<M, E> mapper;
+    protected final Function<E, M> entityToModel;
 
     @Nonnull
     protected final List<JpaSorter> sorters;
@@ -68,7 +76,7 @@ public class JpaRepositoryFinder<M, E, F extends Finder<M>, R extends FinderJpaR
     /*******************************************************************************************************************
      *
      ******************************************************************************************************************/
-    private record JpaSortCriterion (@Nonnull String jpaFieldName) implements SortCriterion
+    private record JpaSortCriterion (@Nonnull Enum<?> sortingKey) implements SortCriterion
       {
       }
 
@@ -81,27 +89,33 @@ public class JpaRepositoryFinder<M, E, F extends Finder<M>, R extends FinderJpaR
         public Sort.Order toOrder()
           {
             return new Sort.Order(direction == SortDirection.ASCENDING ? Sort.Direction.ASC : Sort.Direction.DESC,
-                                  criterion.jpaFieldName);
+                                  getName(criterion.sortingKey));
           }
 
         @Override @Nonnull
         public String toString()
           {
-            return "JpaSorter(%s, %s)".formatted(criterion.jpaFieldName, direction.name());
+            return "JpaSorter(%s, %s)".formatted(getName(criterion.sortingKey), direction.name());
+          }
+
+        @Nonnull @SneakyThrows
+        private static String getName (@Nonnull final Enum<?> sortingKey)
+          {
+            return (String)sortingKey.getClass().getMethod("getName").invoke(sortingKey);
           }
       }
 
     /*******************************************************************************************************************
      *
-     * Creates a new instance given a repository and a model-to-entity mapper.
+     * Creates a new instance given a repository and a model-to-entity transformer.
      *
      * @param     repository    the repository
-     * @param     mapper        the mapper
+     * @param     entityToModel the transformer
      *
      ******************************************************************************************************************/
-    public JpaRepositoryFinder (@Nonnull final R repository, @Nonnull final EntityModelMapper<M, E> mapper)
+    public JpaSpecificationFinder (@Nonnull final R repository, @Nonnull final Function<E, M> entityToModel)
       {
-        this(repository, mapper, List.of());
+        this(repository, entityToModel, List.of());
       }
 
     /*******************************************************************************************************************
@@ -110,12 +124,12 @@ public class JpaRepositoryFinder<M, E, F extends Finder<M>, R extends FinderJpaR
      *
      ******************************************************************************************************************/
     @SuppressWarnings("unchecked")
-    public JpaRepositoryFinder (@Nonnull final JpaRepositoryFinder<M, E, F, R> other, @Nonnull final Object override)
+    public JpaSpecificationFinder (@Nonnull final JpaSpecificationFinder<M, E, F, R> other, @Nonnull final Object override)
       {
         super(other, override);
-        final var source = getSource(JpaRepositoryFinder.class, other, override);
+        final var source = getSource(JpaSpecificationFinder.class, other, override);
         this.repository = (R)source.repository; // See https://stackoverflow.com/questions/76129388
-        this.mapper = source.mapper;
+        this.entityToModel = source.entityToModel;
         this.sorters = source.sorters;
       }
 
@@ -128,7 +142,7 @@ public class JpaRepositoryFinder<M, E, F extends Finder<M>, R extends FinderJpaR
         if (criterion instanceof final JpaSortCriterion jpaSortCriterion)
           {
             final var sorters = concat(this.sorters, new JpaSorter(jpaSortCriterion, direction));
-            return clonedWith(new JpaRepositoryFinder<>(repository, mapper, sorters));
+            return clonedWith(new JpaSpecificationFinder<>(repository, entityToModel, sorters));
           }
 
         return super.sort(criterion, direction);
@@ -136,16 +150,16 @@ public class JpaRepositoryFinder<M, E, F extends Finder<M>, R extends FinderJpaR
 
     /*******************************************************************************************************************
      *
-     * Creates a {@link SortCriterion} by JPA field name.
+     * Creates a {@link SortCriterion} by key.
      *
-     * @param     jpaFieldName    the JPA field name
-     * @return                    the {@code SortCriterion}
+     * @param     sortingKey  the key
+     * @return                the {@code SortCriterion}
      *
      ******************************************************************************************************************/
     @Nonnull
-    public static SortCriterion by (@Nonnull final String jpaFieldName)
+    public static SortCriterion by (@Nonnull final Enum<?> sortingKey)
       {
-        return new JpaSortCriterion(jpaFieldName);
+        return new JpaSortCriterion(sortingKey);
       }
 
     /*******************************************************************************************************************
@@ -154,25 +168,37 @@ public class JpaRepositoryFinder<M, E, F extends Finder<M>, R extends FinderJpaR
     @Override @Nonnull
     protected final List<M> computeNeededResults()
       {
-        final var queryParameters = getQueryParameters();
-        log.info("computeNeededResults({})", queryParameters);
-        final var result = queryParameters.execute(repository).stream().map(mapper::entityToModel).toList();
-        log.info(">>>> returning {} items", result.size());
+        final var baseTime = System.currentTimeMillis();
+        final var specification = getSpecification();
+        final var pageRequest = PageRequest.of(firstResult, maxResults,
+                                               Sort.by(sorters.stream().map(JpaSorter::toOrder).toList()));
+        log.info("computeNeededResults() - {}", pageRequest);
+        final var result = repository.findAll(specification, pageRequest).stream().map(entityToModel).toList();
+        log.info(">>>> returning {} items in {} msec", result.size(), System.currentTimeMillis() - baseTime);
         log.trace(">>>> returning {}", result);
         return result;
       }
 
     /*******************************************************************************************************************
      *
-     * Returns the query parameters for this finder. This method must be overridden by finder subclasses that manage
-     * further parameters.
-     *
-     * @return            the query parameters
-     *
      ******************************************************************************************************************/
     @Nonnull
-    protected QueryParameters<E, R> getQueryParameters()
+    protected Specification<E> getSpecification()
       {
-        return new QueryParameters<>(firstResult, maxResults, sorters);
+        return (root, query, criteriaBuilder) ->
+          {
+            final var predicates = new ArrayList<Predicate>();
+            composeSpecification(root, criteriaBuilder, predicates);
+            return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
+          };
+      }
+
+    /*******************************************************************************************************************
+     *
+     ******************************************************************************************************************/
+    protected void composeSpecification (@Nonnull final Root<E> root,
+                                         @Nonnull final CriteriaBuilder criteriaBuilder,
+                                         @Nonnull final List<? super Predicate> predicates)
+      {
       }
   }

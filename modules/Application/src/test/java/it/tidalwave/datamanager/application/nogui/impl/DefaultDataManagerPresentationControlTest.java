@@ -43,7 +43,7 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 import static it.tidalwave.datamanager.application.nogui.DataManagerPresentationControl.Options.with;
 import static it.tidalwave.util.Finder.SortDirection.ASCENDING;
-import static it.tidalwave.util.spring.jpa.JpaRepositoryFinder.by;
+import static it.tidalwave.util.spring.jpa.JpaSpecificationFinder.by;
 import static org.mockito.Mockito.*;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;

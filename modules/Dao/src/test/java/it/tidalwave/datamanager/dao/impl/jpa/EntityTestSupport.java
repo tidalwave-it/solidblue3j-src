@@ -28,6 +28,8 @@ package it.tidalwave.datamanager.dao.impl.jpa;
 
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import jakarta.inject.Inject;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -63,82 +65,96 @@ public class EntityTestSupport extends AbstractTestNGSpringContextTests
     private EntityManagerFactory emf;
 
     /******************************************************************************************************************/
+    @PostConstruct
+    private void initialize()
+      {
+        emf = txManager.getEntityManagerFactory();
+      }
+
+    /******************************************************************************************************************/
+    @PreDestroy
+    private void cleanUp()
+      {
+        emf.close();
+      }
+
+    /******************************************************************************************************************/
     protected <T> void assertEqualityConsistency (@Nonnull final Class<T> entityClass,
                                                   @Nonnull final T entity,
                                                   @Nonnull final Options ... options)
       {
-        emf = txManager.getEntityManagerFactory();
+        assertTrue(entity.equals(entity));
+        assertFalse(entity.equals(""));
 
         final var tuples = new HashSet<>();
-
         tuples.add(entity);
         assertTrue(tuples.contains(entity));
 
         if (getId(entity) == null)
           {
             runInTx(em ->
-              {
-                em.persist(entity);
-                em.flush();
-                assertTrue(tuples.contains(entity), "Not found in the Set after its persisted.");
-              });
+                      {
+                      em.persist(entity);
+                      em.flush();
+                      assertTrue(tuples.contains(entity), "Not found in the Set after its persisted.");
+                      });
           }
         else
           {
             runInTx(em ->
-              {
-                em.persist(entity);
-                em.flush();
-              });
+                      {
+                      em.persist(entity);
+                      em.flush();
+                      });
           }
 
         assertTrue(tuples.contains(entity));
 
         runInTx(em ->
-          {
-            final var entityProxy = em.getReference(entityClass, getId(entity));
-          assertEquals(entity, entityProxy, "Proxy is not equal to the entity.");
-          });
+                  {
+                  final var entityProxy = em.getReference(entityClass, getId(entity));
+                  assertEquals(entity, entityProxy, "Proxy is not equal to the entity.");
+                  });
 
         if (!Arrays.asList(options).contains(Options.IGNORE_PROXY_EQUALITY))
           {
             runInTx(em ->
-              {
-                final var entityProxy = em.getReference(entityClass, getId(entity));
-                assertEquals(entityProxy, entity, "Not equal to the entity proxy.");
-              });
+                      {
+                      final var entityProxy = em.getReference(entityClass, getId(entity));
+                      assertEquals(entityProxy, entity, "Not equal to the entity proxy.");
+                      });
           }
 
         runInTx(em ->
-          {
-            final var _entity = em.merge(entity);
-            assertTrue(tuples.contains(_entity), "Not found in the Set after its merged.");
-          });
+                  {
+                  final var _entity = em.merge(entity);
+                  assertTrue(tuples.contains(_entity), "Not found in the Set after its merged.");
+                  });
 
         runInTx(em ->
-          {
-            em.unwrap(Session.class).merge(entity);
-            assertTrue(tuples.contains(entity), "TNot found in the Set after its reattached.");
-          });
+                  {
+                  em.unwrap(Session.class).merge(entity);
+                  assertTrue(tuples.contains(entity), "TNot found in the Set after its reattached.");
+                  });
 
         runInTx(em ->
-          {
-            final var _entity = em.find(entityClass, getId(entity));
-            assertTrue(tuples.contains(_entity), "Not found in the Set after loaded in a different PersistenceContext.");
-          });
+                  {
+                  final var _entity = em.find(entityClass, getId(entity));
+                  assertTrue(tuples.contains(_entity), "Not found in the Set after loaded in a different PersistenceContext.");
+                  });
 
         runInTx(em ->
-          {
-            final var _entity = em.getReference(entityClass, getId(entity));
-            assertTrue(tuples.contains(_entity), "Not found in the Set after loaded as a proxy in a different Persistence Context.");
-          });
+                  {
+                  final var _entity = em.getReference(entityClass, getId(entity));
+                  assertTrue(tuples.contains(_entity), "Not found in the Set after loaded as a proxy in a different Persistence Context.");
+                  });
 
         final var deletedEntity = runInTxWithResult(em ->
-          {
-            final var _entity = em.getReference(entityClass, getId(entity));
-            em.remove(_entity);
-            return _entity;
-          });
+                                                      {
+                                                      final var _entity = em.getReference(entityClass, getId(entity));
+                                                      em.remove(_entity);
+                                                      return _entity;
+                                                      });
 
         assertTrue(tuples.contains(deletedEntity), "Not found in the Set even after its deleted.");
       }

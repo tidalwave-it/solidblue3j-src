@@ -35,7 +35,6 @@ import org.springframework.context.annotation.ComponentScan;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.slf4j.LoggerFactory;
 import it.tidalwave.util.PreferencesHandler;
-import it.tidalwave.util.spring.jpa.impl.DefaultFinderJpaRepository;
 import it.tidalwave.role.impl.ServiceLoaderLocator;
 import it.tidalwave.role.spi.SystemRoleFactory;
 import it.tidalwave.role.spring.spi.AnnotationSpringSystemRoleFactory;
@@ -50,8 +49,7 @@ import it.tidalwave.datamanager.dao.impl.jpa.JpaDataManagerDao;
  **********************************************************************************************************************/
 @SpringBootApplication(scanBasePackages = "it.tidalwave.datamanager")
 @ComponentScan({"it.tidalwave.datamanager", "it.tidalwave.util.spring.jpa"})
-@EnableJpaRepositories(basePackageClasses = JpaDataManagerDao.class,
-                       repositoryBaseClass = DefaultFinderJpaRepository.class)
+@EnableJpaRepositories(basePackageClasses = JpaDataManagerDao.class)
 @EntityScan("it.tidalwave.datamanager.dao")
 public class Main
   {

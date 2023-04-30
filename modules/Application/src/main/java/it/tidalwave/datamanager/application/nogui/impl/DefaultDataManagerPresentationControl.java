@@ -39,8 +39,9 @@ import it.tidalwave.datamanager.model.ManagedFile;
 import it.tidalwave.datamanager.application.nogui.DataManagerPresentation;
 import it.tidalwave.datamanager.application.nogui.DataManagerPresentationControl;
 import lombok.RequiredArgsConstructor;
+import static it.tidalwave.datamanager.model.DataManager.ManagedFileFinder.SortingKeys.PATH;
 import static it.tidalwave.util.Finder.SortDirection.ASCENDING;
-import static it.tidalwave.util.spring.jpa.JpaRepositoryFinder.by;
+import static it.tidalwave.util.spring.jpa.JpaSpecificationFinder.by;
 import static it.tidalwave.role.ui.spi.PresentationModelCollectors.toCompositePresentationModel;
 
 /***********************************************************************************************************************
@@ -71,7 +72,7 @@ public class DefaultDataManagerPresentationControl implements DataManagerPresent
 
         final var pm = dataManager.findManagedFiles()
                                   .withFingerprint(options.fingerprint)
-                                  .sort(by("path"), ASCENDING)
+                                  .sort(by(PATH), ASCENDING)
                                   .max(options.max)
                                   .stream()
                                   .filter(createPredicate(options))

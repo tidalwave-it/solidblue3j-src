@@ -28,77 +28,81 @@ package it.tidalwave.datamanager.dao.impl.jpa;
 
 import jakarta.annotation.Nonnull;
 import java.util.List;
-import java.nio.file.Path;
-import org.springframework.stereotype.Component;
-import it.tidalwave.util.Id;
-import it.tidalwave.util.spring.jpa.impl.Fetcher;
+import java.util.Optional;
+import java.util.function.Function;
+import java.io.Serial;
+import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.Predicate;
+import jakarta.persistence.criteria.Root;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import it.tidalwave.util.spring.jpa.JpaSpecificationFinder;
 import it.tidalwave.datamanager.model.DataManager.ManagedFileFinder;
-import it.tidalwave.datamanager.model.Fingerprint;
 import it.tidalwave.datamanager.model.ManagedFile;
-import it.tidalwave.datamanager.dao.DataManagerDao;
-import lombok.AllArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 
 /***********************************************************************************************************************
  *
- * The DAO for the application.
+ * A specialised {@link it.tidalwave.util.Finder} for {@link ManagedFileEntity}.
  *
- * @stereotype  DAO
- * @author      Fabrizio Giudici
+ * @stereotype Finder
+ * @author Fabrizio Giudici
  *
  **********************************************************************************************************************/
-@Component @AllArgsConstructor @Slf4j
-public class JpaDataManagerDao implements DataManagerDao
+@SuppressFBWarnings("SE_BAD_FIELD")
+public class JpaManagedFileFinder
+        extends JpaSpecificationFinder<ManagedFile, ManagedFileEntity, ManagedFileFinder, ManagedFileEntityJpaRepository>
+        implements ManagedFileFinder
   {
-    @Nonnull
-    private final ManagedFileEntityJpaRepository managedFileRepo;
+    @Serial private static final long serialVersionUID = 0L;
 
-    @Nonnull
-    private final Fetcher fetcher;
+    private final Optional<String> fingerprint;
+
+    /*******************************************************************************************************************
+     *
+     ******************************************************************************************************************/
+    public JpaManagedFileFinder (@Nonnull final ManagedFileEntityJpaRepository repository,
+                                 @Nonnull final Function<ManagedFileEntity, ManagedFile> transformer)
+      {
+        this(repository, transformer, Optional.empty());
+      }
+
+    /*******************************************************************************************************************
+     *
+     ******************************************************************************************************************/
+    private JpaManagedFileFinder (@Nonnull final ManagedFileEntityJpaRepository repository,
+                                  @Nonnull final Function<ManagedFileEntity, ManagedFile> transformer,
+                                  @Nonnull final Optional<String> fingerprint)
+      {
+        super(repository, transformer);
+        this.fingerprint = fingerprint;
+      }
+
+    /*******************************************************************************************************************
+     * The copy constructor required by {@link it.tidalwave.util.spi.HierarchicFinderSupport}.
+     ******************************************************************************************************************/
+    public JpaManagedFileFinder (@Nonnull final JpaManagedFileFinder other, @Nonnull final Object override)
+      {
+        super(other, override);
+        final var source = getSource(JpaManagedFileFinder.class, other, override);
+        this.fingerprint = source.fingerprint;
+      }
 
     /*******************************************************************************************************************
      * {@inheritDoc}
      ******************************************************************************************************************/
     @Override @Nonnull
-    public ManagedFileFinder findManagedFiles()
+    public ManagedFileFinder withFingerprint (@Nonnull final Optional<String> fingerprint)
       {
-        return new JpaManagedFileFinder(managedFileRepo, this::managedFileEntityToModel);
+        return clonedWith(new JpaManagedFileFinder(repository, entityToModel, fingerprint));
       }
 
     /*******************************************************************************************************************
      * {@inheritDoc}
      ******************************************************************************************************************/
-    @Nonnull
-    public ManagedFile managedFileEntityToModel (@Nonnull final ManagedFileEntity entity)
+    protected void composeSpecification (@Nonnull final Root<ManagedFileEntity> root,
+                                         @Nonnull final CriteriaBuilder criteriaBuilder,
+                                         @Nonnull final List<? super Predicate> predicates)
       {
-        return new ManagedFile(Id.of(entity.getId()),
-             Path.of(entity.getPath()),
-             entity.isInitialized()
-             ? () -> fingerprintEntitiesToModel(entity.getFingerprints())
-             : () -> fingerprintEntitiesToModel(fetcher.fetch(entity, ManagedFileEntity::getFingerprints)));
-      }
-
-    /*******************************************************************************************************************
-     *
-     ******************************************************************************************************************/
-    @Nonnull
-    private static List<Fingerprint> fingerprintEntitiesToModel (@Nonnull final List<? extends FingerprintEntity> entities)
-      {
-        return entities.stream().map(JpaDataManagerDao::fingerprintEntityToModel).toList();
-      }
-
-    /*******************************************************************************************************************
-     *
-     ******************************************************************************************************************/
-    @Nonnull
-    private static Fingerprint fingerprintEntityToModel (@Nonnull final FingerprintEntity entity)
-      {
-        return Fingerprint.builder()
-                          .id(Id.of(entity.getId()))
-                          .name(entity.getName())
-                          .algorithm(entity.getAlgorithm())
-                          .fingerprint(entity.getValue())
-                          .timestamp(entity.getTimestamp())
-                          .build();
+        fingerprint.ifPresent(f -> predicates.add(criteriaBuilder.equal(root.join("fingerprints").get("value"), f)));
       }
   }
+

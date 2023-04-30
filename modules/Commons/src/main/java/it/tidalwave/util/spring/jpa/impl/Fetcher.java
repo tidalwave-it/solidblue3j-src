@@ -30,66 +30,45 @@ import jakarta.annotation.Nonnull;
 import java.util.Collection;
 import java.util.function.Function;
 import jakarta.persistence.EntityManager;
-import jakarta.persistence.PersistenceUnitUtil;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.support.JpaEntityInformation;
-import org.springframework.data.jpa.repository.support.SimpleJpaRepository;
+import org.springframework.stereotype.Component;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import jakarta.transaction.Transactional;
-import it.tidalwave.util.spring.jpa.FinderJpaRepository;
+import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 /***********************************************************************************************************************
  *
- * A specialisation of {@link JpaRepository} to support {@code Finder}s.
+ * A convenience class to fetch relation collections of an Entity. Being a separate object, it is transactional even
+ * if called from outside a transactional context.
  *
- * @param   <E> the static type of the JPA entity
- * @param   <K> the static type of the JPA entity key
  * @stereotype  Repository
  * @author      Fabrizio Giudici
  *
  **********************************************************************************************************************/
-@Slf4j
-public class DefaultFinderJpaRepository<E, K> extends SimpleJpaRepository<E, K> implements FinderJpaRepository<E, K>
+@Component @AllArgsConstructor @Slf4j
+public class Fetcher
   {
     @Nonnull
     private final EntityManager em;
 
-    @Nonnull
-    private final PersistenceUnitUtil puUtil;
-
     /*******************************************************************************************************************
      *
-     ******************************************************************************************************************/
-    @SuppressFBWarnings("MALICIOUS_CODE")
-    public DefaultFinderJpaRepository (@Nonnull final JpaEntityInformation<E, ?> entityInformation,
-                                       @Nonnull final EntityManager em)
-      {
-        super(entityInformation, em);
-        this.em = em;
-        this.puUtil = em.getEntityManagerFactory().getPersistenceUnitUtil();
-      }
-
-    /*******************************************************************************************************************
+     * Fetches elements in a lazy related collection in a transactional context.
+     *
+     * @param   entity        the entity
+     * @param   function      the function to extract the related collection
+     * @return                the related collection
+     * @param   <E>           the static type of the entity
+     * @param   <Q>           the static type of the related JPA entity
+     * @param   <R>           the static type of the collection of Q
      *
      ******************************************************************************************************************/
-    @SuppressFBWarnings("MALICIOUS_CODE")
-    public DefaultFinderJpaRepository (@Nonnull final Class<E> domainClass, @Nonnull final EntityManager em)
+    @Transactional
+    @Nonnull @SuppressFBWarnings("RV_RETURN_VALUE_IGNORED_NO_SIDE_EFFECT")
+    public <E, R extends Collection<Q>, Q> R fetch (@Nonnull final E entity,
+                                                    @Nonnull final Function<? super E, R> function)
       {
-        super(domainClass, em);
-        this.em = em;
-        this.puUtil = em.getEntityManagerFactory().getPersistenceUnitUtil();
-      }
-
-    /*******************************************************************************************************************
-     *
-     * {@inheritDoc}
-     *
-     ******************************************************************************************************************/
-    @Override @Transactional @Nonnull @SuppressFBWarnings("RV_RETURN_VALUE_IGNORED_NO_SIDE_EFFECT")
-    public <R extends Collection<Q>, Q> R fetch (@Nonnull final E entity,
-                                                 @Nonnull final Function<? super E, R> function)
-      {
+        final var puUtil = em.getEntityManagerFactory().getPersistenceUnitUtil();
         log.info("fetch({}, id={})", entity.getClass().getSimpleName(), puUtil.getIdentifier(entity));
         final var result = function.apply(em.merge(entity));
         result.size(); // trigger fetch

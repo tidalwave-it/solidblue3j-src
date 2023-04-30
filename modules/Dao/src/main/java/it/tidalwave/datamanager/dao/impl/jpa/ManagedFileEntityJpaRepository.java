@@ -26,11 +26,9 @@
  */
 package it.tidalwave.datamanager.dao.impl.jpa;
 
-import jakarta.annotation.Nonnull;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import jakarta.transaction.Transactional;
-import it.tidalwave.util.spring.jpa.FinderJpaRepository;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.stereotype.Repository;
 
 /***********************************************************************************************************************
  *
@@ -40,17 +38,8 @@ import it.tidalwave.util.spring.jpa.FinderJpaRepository;
  * @author      Fabrizio Giudici
  *
  **********************************************************************************************************************/
-public interface ManagedFileEntityJpaRepository extends FinderJpaRepository<ManagedFileEntity, String>
+@Repository
+public interface ManagedFileEntityJpaRepository
+        extends JpaRepository<ManagedFileEntity, String>, JpaSpecificationExecutor<ManagedFileEntity>
   {
-    /*******************************************************************************************************************
-     *
-     * Returns {@link ManagedFileEntity} instances having the given fingerprint.
-     *
-     * @param   pageable      the paging parameters for the query
-     * @param   fingerprint   the fingerprint
-     * @return                the entities
-     *
-     ******************************************************************************************************************/
-    @Transactional @Nonnull
-    public Page<ManagedFileEntity> findByFingerprintsValue (@Nonnull Pageable pageable, @Nonnull String fingerprint);
   }

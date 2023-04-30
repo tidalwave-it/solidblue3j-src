@@ -29,6 +29,8 @@ package it.tidalwave.datamanager.model;
 import jakarta.annotation.Nonnull;
 import java.util.Optional;
 import it.tidalwave.util.spi.ExtendedFinderSupport;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 
 /***********************************************************************************************************************
  *
@@ -46,6 +48,18 @@ public interface DataManager
     public static interface ManagedFileFinder extends ExtendedFinderSupport<ManagedFile, ManagedFileFinder>
       {
         /***************************************************************************************************************
+         * Sorting keys.
+         **************************************************************************************************************/
+        @RequiredArgsConstructor @Getter
+        public enum SortingKeys
+          {
+            PATH("path");
+
+            @Nonnull
+            private final String name;
+          }
+
+        /***************************************************************************************************************
          * Specifies that returned {@link ManagedFile}s must contain the given fingerprint.
          * @param     fingerprint   the fingerprint
          * @return                  the same finder in fluent style
@@ -60,9 +74,9 @@ public interface DataManager
          **************************************************************************************************************/
         @Nonnull
         public default ManagedFileFinder withFingerprint (@Nonnull final String fingerprint)
-        {
-          return withFingerprint(Optional.of(fingerprint));
-        }
+          {
+            return withFingerprint(Optional.of(fingerprint));
+          }
       }
 
     /*******************************************************************************************************************

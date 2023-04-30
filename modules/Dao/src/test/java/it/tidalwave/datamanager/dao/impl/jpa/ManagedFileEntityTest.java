@@ -32,7 +32,6 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.test.context.ActiveProfiles;
 import jakarta.transaction.Transactional;
-import it.tidalwave.util.spring.jpa.impl.DefaultFinderJpaRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.testng.annotations.Test;
 import static jakarta.transaction.Transactional.TxType.SUPPORTS;
@@ -47,7 +46,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
  **********************************************************************************************************************/
 @DataJpaTest
 @AutoConfigureTestDatabase(replace = NONE)
-@EnableJpaRepositories(repositoryBaseClass = DefaultFinderJpaRepository.class)
+@EnableJpaRepositories
 @ActiveProfiles("test")
 @Slf4j
 public class ManagedFileEntityTest extends EntityTestSupport
