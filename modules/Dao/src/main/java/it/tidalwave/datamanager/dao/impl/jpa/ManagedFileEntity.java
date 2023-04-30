@@ -40,12 +40,11 @@ import jakarta.persistence.OrderBy;
 import jakarta.persistence.Table;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.hibernate.Hibernate;
-import org.hibernate.annotations.Cascade;
-import org.hibernate.annotations.CascadeType;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import static jakarta.persistence.CascadeType.PERSIST;
 
 /***********************************************************************************************************************
  *
@@ -71,9 +70,8 @@ public class ManagedFileEntity
     private String path;
 
     @Setter
-    @OneToMany(mappedBy = "fileId", fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "fileId", fetch = FetchType.LAZY, cascade = PERSIST)
     @OrderBy("timestamp asc")
-    @Cascade(CascadeType.PERSIST)
     private List<FingerprintEntity> fingerprints = new ArrayList<>();
 
     public boolean isInitialized()
