@@ -1,3 +1,4 @@
 #!/bin/bash
 
-"$JAVA17_HOME/bin/java" -jar "$(find . -name 'solidblue3-application-nogui*exec.jar')" "$@"
+DIR="$(dirname "$(readlink -f "$0")")"
+"$JAVA17_HOME/bin/java" -jar `find $DIR/.. -name 'solidblue3-application-nogui*exec.jar'` "$@"
