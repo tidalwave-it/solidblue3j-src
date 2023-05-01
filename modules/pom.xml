@@ -17,7 +17,7 @@
     <properties>
         <tft.spring.version>6.0.8</tft.spring.version>
         <tft.spring-boot.version>3.0.5</tft.spring-boot.version>
-        <tft.thesefoolishings.version>3.2-ALPHA-21</tft.thesefoolishings.version>
+        <tft.thesefoolishings.version>3.2-ALPHA-22</tft.thesefoolishings.version>
         <equalsverifier.version>3.14.1</equalsverifier.version>
         <hibernate.version>6.1.7.Final</hibernate.version>
         <inject-api.version>2.0.0</inject-api.version>

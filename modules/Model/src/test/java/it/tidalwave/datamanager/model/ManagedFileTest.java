@@ -73,7 +73,7 @@ public class ManagedFileTest
         // when
         final var actualResult = underTest.toString();
         // then
-        assertThat(actualResult, is("ManagedFile(id=0, path=/foo/bar, fingerprints=LazySupplier(ref=null))"));
+        assertThat(actualResult, is("ManagedFile(id=0, path=/foo/bar, fingerprints=LazySupplier(<not initialised>))"));
       }
 
     /******************************************************************************************************************/
@@ -85,7 +85,7 @@ public class ManagedFileTest
         final var actualResult = underTest.toString();
         // then
         assertThat(actualResult, is("ManagedFile(id=0, path=/foo/bar, " +
-                                    "fingerprints=LazySupplier(ref=[Fingerprint(id=id, name=/foo/bar, " +
+                                    "fingerprints=LazySupplier([Fingerprint(id=id, name=/foo/bar, " +
                                     "algorithm=md5, fingerprint=xyz, timestamp=2023-04-22T10:19)]))"));
       }
   }

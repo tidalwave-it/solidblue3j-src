@@ -50,6 +50,7 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.test.context.testng.AbstractTestNGSpringContextTests;
 import jakarta.transaction.Transactional;
 import it.tidalwave.util.IdFactory;
+import it.tidalwave.util.LazySupplier;
 import it.tidalwave.util.spring.jpa.impl.LoggingJpaTransactionManager;
 import it.tidalwave.datamanager.model.ManagedFile;
 import lombok.extern.slf4j.Slf4j;
@@ -80,8 +81,8 @@ import static org.hamcrest.Matchers.containsInAnyOrder;
 @Slf4j
 public class JpaDataManagerDaoTest extends AbstractTestNGSpringContextTests
   {
-    private static final int MAX_FINGERPRINTS = 10;
     private static final int MAX_MANAGED_FILES = 10;
+    private static final int MAX_FINGERPRINTS = 10;
 
     @Inject
     private JpaDataManagerDao underTest;
@@ -143,10 +144,8 @@ public class JpaDataManagerDaoTest extends AbstractTestNGSpringContextTests
 
         log.info("Asserting that lazy collection of fingerprints not fetched yet...");
         // TODO: this does not test ManagedFileEntity lazy field, only ManagedFile
-        actualResult.stream()
-                    .map(mf -> inspect(mf, "fingerprints"))
-                    .map(lz -> inspect(lz, "ref"))
-                    .forEach(ref -> assertThat(ref, is(nullValue())));
+        actualResult.stream().map(mf -> (LazySupplier<?>)inspect(mf, "fingerprints"))
+                    .forEach(lz -> assertThat(lz.isInitialized(), is(false)));
 
         log.info("Triggering lazy fetch...");
         txManager.resetCounters();

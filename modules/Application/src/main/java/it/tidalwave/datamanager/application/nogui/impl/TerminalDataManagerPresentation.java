@@ -98,9 +98,7 @@ public class TerminalDataManagerPresentation implements DataManagerPresentation
       {
         final var managedFilePm = pair.b;
         printer.accept("%05d) %s".formatted(pair.a, managedFilePm.as(_Displayable_).getDisplayName()));
-        managedFilePm.as(_CompositeOfAs_)
-                     .findChildren()
-                     .stream()
-                     .forEach(f -> printer.accept("    " + f.as(_Displayable_).getDisplayName()));
+        managedFilePm.maybeAs(_CompositeOfAs_).ifPresent(c ->
+            c.findChildren().forEach(f -> printer.accept("    " + f.as(_Displayable_).getDisplayName())));
       }
   }

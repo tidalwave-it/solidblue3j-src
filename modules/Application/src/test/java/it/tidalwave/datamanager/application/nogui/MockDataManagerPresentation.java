@@ -55,7 +55,7 @@ public class MockDataManagerPresentation implements DataManagerPresentation
     @Override
     public void renderManagedFiles (@Nonnull final PresentationModel pm)
       {
-        pm.as(_CompositeOfAs_).findChildren().stream().forEach(o ->
+        pm.as(_CompositeOfAs_).findChildren().forEach(o ->
           {
             objects.add(o.as(ManagedFile.class).getPath().toString());
             o.as(_CompositeOfAs_).findChildren().stream().map(c -> c.as(Fingerprint.class).getFingerprint()).forEach(objects::add);
