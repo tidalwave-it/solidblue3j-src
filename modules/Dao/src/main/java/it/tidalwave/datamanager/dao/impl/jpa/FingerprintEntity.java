@@ -48,8 +48,10 @@ import lombok.ToString;
  *
  **********************************************************************************************************************/
 @Entity
-@Table(name="fingerprints", indexes = {@Index(name = "fingerprints__name", columnList = "name"),
+@Table(name="fingerprints", indexes = {@Index(name = "fingerprints__id", columnList = "id"),
+                                       @Index(name = "fingerprints__name", columnList = "name"),
                                        @Index(name = "fingerprints__timestamp", columnList = "timestamp"),
+                                       @Index(name = "fingerprints__fingerprint", columnList = "fingerprint"),
                                        @Index(name = "fingerprints__file_id", columnList = "file_id")})
 @NoArgsConstructor @AllArgsConstructor @Getter @ToString
 @SuppressFBWarnings({"EI_EXPOSE_REP", "EI_EXPOSE_REP2"})
