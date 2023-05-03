@@ -68,5 +68,12 @@
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-classic</artifactId>
         </dependency>
+
+        <!-- TEST dependencies -->
+        <dependency>
+            <groupId>it.tidalwave.solidblue3</groupId>
+            <artifactId>solidblue3-model</artifactId>
+            <classifier>tests</classifier>
+        </dependency>
     </dependencies>
 </project>

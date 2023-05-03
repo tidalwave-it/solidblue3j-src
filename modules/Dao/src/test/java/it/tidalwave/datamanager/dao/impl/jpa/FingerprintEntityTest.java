@@ -26,15 +26,17 @@
  */
 package it.tidalwave.datamanager.dao.impl.jpa;
 
-import java.time.LocalDateTime;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.test.annotation.Rollback;
 import org.springframework.test.context.ActiveProfiles;
 import lombok.extern.slf4j.Slf4j;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 import static org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase.Replace.NONE;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 /***********************************************************************************************************************
  *
@@ -48,10 +50,40 @@ import static org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTest
 @Slf4j
 public class FingerprintEntityTest extends EntityTestSupport
   {
+    private TestEntityFactory tef;
+
+    /******************************************************************************************************************/
+    @BeforeMethod
+    public void prepare()
+      {
+        tef = new TestEntityFactory();
+      }
+
+    /******************************************************************************************************************/
     @Test @Rollback
     public void test_equals_and_hashcode()
       {
-        final var underTest = new FingerprintEntity("id", "", "", "", LocalDateTime.now(), "");
+        // given
+        final var underTest = tef.createFingerprintEntity("fileId");
+        // then
         assertEqualityConsistency(FingerprintEntity.class, underTest);
+      }
+
+    /******************************************************************************************************************/
+    @Test
+    public void test_toString()
+      {
+        // given
+        final var underTest = tef.createFingerprintEntity("fileId");
+        // when
+        final var actualResult = underTest.toString();
+        // then
+        final var expectedResult = "FingerprintEntity(id=00000000-0000-0000-0000-000000000000, " +
+                                   "name=name, " +
+                                   "algorithm=md5, " +
+                                   "value=fingerprint, " +
+                                   "timestamp=2023-03-15T07:41:36, " +
+                                   "fileId=fileId)";
+        assertThat(actualResult, is(expectedResult));
       }
   }

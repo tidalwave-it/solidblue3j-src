@@ -1,4 +1,4 @@
-/*
+package it.tidalwave.datamanager.util;/*
  * *********************************************************************************************************************
  *
  * SolidBlue 3: Data safety
@@ -24,48 +24,36 @@
  *
  * *********************************************************************************************************************
  */
-package it.tidalwave.datamanager.model;
 
-import nl.jqno.equalsverifier.EqualsVerifier;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.MatcherAssert.assertThat;
+import jakarta.annotation.Nonnull;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.math.BigInteger;
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 /***********************************************************************************************************************
  *
  * @author      Fabrizio Giudici
  *
  **********************************************************************************************************************/
-public class FingerprintTest
+public class Utilities
   {
-    private Fingerprint underTest;
-
-    /******************************************************************************************************************/
-    @BeforeMethod
-    public void setup()
+    @Nonnull
+    public static byte[] fingerprintOfString (@Nonnull final String algorithm, @Nonnull final String string)
       {
-        underTest = new TestModelFactory().createFingerprint();
+        try
+          {
+            return MessageDigest.getInstance(algorithm).digest(string.getBytes(UTF_8));
+          }
+        catch (NoSuchAlgorithmException e)
+          {
+            throw new RuntimeException(e);
+          }
       }
 
-    /******************************************************************************************************************/
-    @Test
-    public void test_equals_and_hashCode()
+    @Nonnull
+    public static String fingerprintToString (@Nonnull final byte[] bytes)
       {
-        EqualsVerifier.forClass(Fingerprint.class).withIgnoredFields("asDelegate").verify();
-      }
-
-    /******************************************************************************************************************/
-    @Test
-    public void test_toString()
-      {
-        // when
-        final var actualResult = underTest.toString();
-        // then
-        assertThat(actualResult, is("Fingerprint(id=00000000-0000-0000-0000-000000000000, " +
-                                    "name=e047, " +
-                                    "algorithm=md5, " +
-                                    "fingerprint=c8e4cdd9e050a8223709bb0a59c18228, " +
-                                    "timestamp=2023-03-15T07:41:36)"));
+        return ("%0" + (bytes.length * 2) + "x").formatted(new BigInteger(1, bytes));
       }
   }

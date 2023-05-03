@@ -24,48 +24,26 @@
  *
  * *********************************************************************************************************************
  */
-package it.tidalwave.datamanager.model;
+package it.tidalwave.datamanager.util;
 
-import nl.jqno.equalsverifier.EqualsVerifier;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.MatcherAssert.assertThat;
+import jakarta.annotation.Nonnull;
+import java.util.concurrent.atomic.AtomicInteger;
+import it.tidalwave.util.Id;
+import it.tidalwave.util.IdFactory;
 
 /***********************************************************************************************************************
  *
  * @author      Fabrizio Giudici
  *
  **********************************************************************************************************************/
-public class FingerprintTest
+// TODO: replace with IdFactory.createMock() when available
+public class MockIdFactory implements IdFactory
   {
-    private Fingerprint underTest;
+    private final AtomicInteger sequence = new AtomicInteger(0);
 
-    /******************************************************************************************************************/
-    @BeforeMethod
-    public void setup()
+    @Override @Nonnull
+    public Id createId()
       {
-        underTest = new TestModelFactory().createFingerprint();
-      }
-
-    /******************************************************************************************************************/
-    @Test
-    public void test_equals_and_hashCode()
-      {
-        EqualsVerifier.forClass(Fingerprint.class).withIgnoredFields("asDelegate").verify();
-      }
-
-    /******************************************************************************************************************/
-    @Test
-    public void test_toString()
-      {
-        // when
-        final var actualResult = underTest.toString();
-        // then
-        assertThat(actualResult, is("Fingerprint(id=00000000-0000-0000-0000-000000000000, " +
-                                    "name=e047, " +
-                                    "algorithm=md5, " +
-                                    "fingerprint=c8e4cdd9e050a8223709bb0a59c18228, " +
-                                    "timestamp=2023-03-15T07:41:36)"));
+        return Id.of(String.format("%08x-0000-0000-0000-000000000000", sequence.getAndIncrement()));
       }
   }

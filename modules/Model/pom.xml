@@ -47,6 +47,10 @@
             <groupId>it.tidalwave.thesefoolishthings</groupId>
             <artifactId>it-tidalwave-util</artifactId>
         </dependency>
+        <dependency>
+            <groupId>it.tidalwave.solidblue3</groupId>
+            <artifactId>solidblue3-commons</artifactId>
+        </dependency>
 
         <dependency>
             <groupId>org.springframework</groupId>

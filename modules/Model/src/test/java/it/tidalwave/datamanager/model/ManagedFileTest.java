@@ -26,11 +26,7 @@
  */
 package it.tidalwave.datamanager.model;
 
-import java.time.LocalDateTime;
-import java.util.List;
-import java.nio.file.Path;
 import nl.jqno.equalsverifier.EqualsVerifier;
-import it.tidalwave.util.Id;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 import static org.hamcrest.CoreMatchers.is;
@@ -49,14 +45,7 @@ public class ManagedFileTest
     @BeforeMethod
     public void setup()
       {
-        final var fingerprint = Fingerprint.builder()
-                                           .id(Id.of("id"))
-                                           .name("/foo/bar")
-                                           .algorithm("md5")
-                                           .fingerprint("xyz")
-                                           .timestamp(LocalDateTime.of(2023, 4, 22, 10, 19))
-                                           .build();
-        underTest = new ManagedFile(Id.of("0"), Path.of("/foo/bar"), () -> List.of(fingerprint));
+        underTest = new TestModelFactory().createManagedFile(1);
       }
 
     /******************************************************************************************************************/
@@ -73,7 +62,9 @@ public class ManagedFileTest
         // when
         final var actualResult = underTest.toString();
         // then
-        assertThat(actualResult, is("ManagedFile(id=0, path=/foo/bar, fingerprints=LazySupplier(<not initialised>))"));
+        assertThat(actualResult, is("ManagedFile(id=00000000-0000-0000-0000-000000000000, " +
+                                    "path=/foo/bar/e047, " +
+                                    "fingerprints=LazySupplier(<not initialised>))"));
       }
 
     /******************************************************************************************************************/
@@ -84,8 +75,13 @@ public class ManagedFileTest
         underTest.getFingerprints();
         final var actualResult = underTest.toString();
         // then
-        assertThat(actualResult, is("ManagedFile(id=0, path=/foo/bar, " +
-                                    "fingerprints=LazySupplier([Fingerprint(id=id, name=/foo/bar, " +
-                                    "algorithm=md5, fingerprint=xyz, timestamp=2023-04-22T10:19)]))"));
+        assertThat(actualResult, is("ManagedFile(id=00000000-0000-0000-0000-000000000000, " +
+                                    "path=/foo/bar/e047, " +
+                                    "fingerprints=LazySupplier(" +
+                                        "[Fingerprint(id=00000001-0000-0000-0000-000000000000, " +
+                                        "name=2e10, " +
+                                        "algorithm=md5, " +
+                                        "fingerprint=bdca7cec8394ba8119ab66409f13dd16, " +
+                                        "timestamp=2023-03-15T07:41:36)]))"));
       }
   }

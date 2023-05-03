@@ -26,15 +26,14 @@
  */
 package it.tidalwave.datamanager.dao.impl.jpa;
 
-import java.util.List;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
+import org.springframework.test.annotation.Rollback;
 import org.springframework.test.context.ActiveProfiles;
-import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
-import static jakarta.transaction.Transactional.TxType.SUPPORTS;
 import static org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase.Replace.NONE;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -51,41 +50,54 @@ import static org.hamcrest.MatcherAssert.assertThat;
 @Slf4j
 public class ManagedFileEntityTest extends EntityTestSupport
   {
+    private TestEntityFactory tef;
+
     /******************************************************************************************************************/
-    @Test
+    @BeforeMethod
+    public void prepare()
+      {
+        tef = new TestEntityFactory();
+      }
+
+    /******************************************************************************************************************/
+    @Test @Rollback
     public void test_equals_and_hashCode()
       {
         // given
-        final var underTest = new ManagedFileEntity("id", "path", List.of());
+        final var underTest = tef.createManagedFileEntity("/foo/bar", 0);
         // then
         assertEqualityConsistency(ManagedFileEntity.class, underTest);
       }
 
     /******************************************************************************************************************/
-    @Test @Transactional(SUPPORTS)
+    @Test
     public void test_toString_without_proxy()
       {
         // given
-        final var underTest = new ManagedFileEntity("id", "path", List.of());
+        final var underTest = tef.createManagedFileEntity("/foo/bar", 0);
         // when
         final var actualResult = underTest.toString();
         // then
-        final var expectedResult =
-            "ManagedFileEntity@%x(id=id, path=path, fingerprints=[])".formatted(System.identityHashCode(underTest));
+        final var expectedResult = ("ManagedFileEntity@%x(id=00000000-0000-0000-0000-000000000000, " +
+                                    "path=/foo/bar, " +
+                                    "fingerprints=[])").formatted(System.identityHashCode(underTest));
         assertThat(actualResult, is(expectedResult));
       }
 
     /******************************************************************************************************************/
-    @Test
+    @Test @Rollback
     public void test_toString_with_proxy()
       {
         // given
-        runInTx(em -> em.persist(new ManagedFileEntity("id2", "path", List.of())));
-        final var underTest =  runInTxWithResult(em -> em.find(ManagedFileEntity.class, "id2"));
+        final var entity = tef.createManagedFileEntity("/foo/bar", 0);
+        runInTx(em -> em.persist(entity));
+        final var underTest =  runInTxWithResult(em -> em.find(ManagedFileEntity.class, entity.getId()));
         // when
         final var actualResult = underTest.toString();
         // then
-        final var expectedResult = "ManagedFileEntity@%x(id=id2, path=path, fingerprints=not initialized)"
+        final var expectedResult = ("ManagedFileEntity@%x(id=00000000-0000-0000-0000-000000000000, " +
+                                    "path=/foo/bar, " +
+                                    "fingerprints=not initialized)")
             .formatted(System.identityHashCode(underTest));
         assertThat(actualResult, is(expectedResult));
       }

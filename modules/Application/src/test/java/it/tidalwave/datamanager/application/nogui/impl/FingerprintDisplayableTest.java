@@ -26,9 +26,7 @@
  */
 package it.tidalwave.datamanager.application.nogui.impl;
 
-import java.time.LocalDateTime;
-import it.tidalwave.util.Id;
-import it.tidalwave.datamanager.model.Fingerprint;
+import it.tidalwave.datamanager.model.TestModelFactory;
 import org.testng.annotations.Test;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -44,16 +42,11 @@ public class FingerprintDisplayableTest
     public void testDisplayable()
       {
         // given
-        final var fingerprint = Fingerprint.builder().id(Id.of("id"))
-                .name("name")
-                .algorithm("md5")
-                .timestamp(LocalDateTime.of(2023, 4, 27, 14,35, 4))
-                .fingerprint("6f38a63e8e9159057a5262cdff0116fe")
-                .build();
+        final var fingerprint = new TestModelFactory().createFingerprint();
         final var underTest = new FingerprintDisplayable(fingerprint);
         // when
         final var actualResult = underTest.getDisplayName();
         // then
-        assertThat(actualResult, is("2023-04-27T14:35:04 md5:6f38a63e8e9159057a5262cdff0116fe"));
+        assertThat(actualResult, is("2023-03-15T07:41:36 md5:c8e4cdd9e050a8223709bb0a59c18228"));
       }
   }

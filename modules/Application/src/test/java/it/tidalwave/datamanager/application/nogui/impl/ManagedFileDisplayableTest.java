@@ -26,10 +26,7 @@
  */
 package it.tidalwave.datamanager.application.nogui.impl;
 
-import java.util.List;
-import java.nio.file.Path;
-import it.tidalwave.util.Id;
-import it.tidalwave.datamanager.model.ManagedFile;
+import it.tidalwave.datamanager.model.TestModelFactory;
 import org.testng.annotations.Test;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -45,11 +42,11 @@ public class ManagedFileDisplayableTest
     public void testDisplayable()
       {
         // given
-        final var managedFile = new ManagedFile(Id.of("id"), Path.of("/foo/bar"), List::of);
+        final var managedFile = new TestModelFactory().createManagedFile(0);
         final var underTest = new ManagedFileDisplayable(managedFile);
         // when
         final var actualResult = underTest.getDisplayName();
         // then
-        assertThat(actualResult, is("/foo/bar"));
+        assertThat(actualResult, is("/foo/bar/e047"));
       }
   }

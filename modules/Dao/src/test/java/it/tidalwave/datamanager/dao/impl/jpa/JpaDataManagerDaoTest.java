@@ -28,45 +28,34 @@ package it.tidalwave.datamanager.dao.impl.jpa;
 
 import jakarta.annotation.Nonnull;
 import jakarta.inject.Inject;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
-import java.util.Random;
-import java.util.function.Consumer;
-import java.util.function.IntFunction;
-import java.util.stream.IntStream;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
+import java.util.stream.Stream;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.math.BigInteger;
 import jakarta.persistence.EntityManager;
+import jakarta.persistence.EntityManagerFactory;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
-import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
+import org.springframework.test.annotation.Commit;
 import org.springframework.test.context.testng.AbstractTestNGSpringContextTests;
 import jakarta.transaction.Transactional;
-import it.tidalwave.util.IdFactory;
 import it.tidalwave.util.LazySupplier;
 import it.tidalwave.util.spring.jpa.impl.LoggingJpaTransactionManager;
 import it.tidalwave.datamanager.model.ManagedFile;
 import lombok.extern.slf4j.Slf4j;
+import org.testng.annotations.AfterClass;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 import static it.tidalwave.datamanager.model.DataManager.ManagedFileFinder.SortingKeys.PATH;
 import static jakarta.transaction.Transactional.TxType.NEVER;
-import static java.util.Comparator.*;
-import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase.Replace.NONE;
 import static it.tidalwave.util.Finder.SortDirection.ASCENDING;
-import static it.tidalwave.util.FunctionalCheckedExceptionWrappers.*;
-import static it.tidalwave.util.StreamUtils.randomLocalDateTimeStream;
 import static it.tidalwave.util.spring.jpa.JpaSpecificationFinder.by;
 import static it.tidalwave.util.test.FileComparisonUtils.assertSameContents;
-import static org.hamcrest.CoreMatchers.*;
+import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 
@@ -88,23 +77,20 @@ public class JpaDataManagerDaoTest extends AbstractTestNGSpringContextTests
     private JpaDataManagerDao underTest;
 
     @Inject
-    private TestEntityManager em;
+    private EntityManager em;
+
+    @Inject
+    private EntityManagerFactory emf;
 
     @Inject
     private LoggingJpaTransactionManager txManager;
 
     private final List<ManagedFileEntity> managedFileEntities = new ArrayList<>();
 
-    private final IdFactory idFactory = IdFactory.MOCK;
-
-    private final Iterator<LocalDateTime> timestampSequence = randomLocalDateTimeStream(
-            17L,
-            LocalDateTime.of(2020, 1, 1, 0, 0),
-            LocalDateTime.of(2023, 12, 31, 23, 59))
-            .iterator();
+    private final TestEntityFactory tef = new TestEntityFactory();
 
     /******************************************************************************************************************/
-    @Test
+    @Test @Commit
     public void test_database_schema()
             throws IOException, InterruptedException
       {
@@ -116,16 +102,32 @@ public class JpaDataManagerDaoTest extends AbstractTestNGSpringContextTests
       }
 
     /******************************************************************************************************************/
-    @Test(dependsOnMethods = "test_database_schema")
+    @AfterClass
+    public void cleanUp()
+      {
+        try (final var em = emf.createEntityManager())
+          {
+            log.info("Scratching database...");
+            em.getTransaction().begin();
+            Stream.of("ManagedFile", "Fingerprint")
+                  .map(e -> String.format("DELETE FROM %sEntity", e))
+                  .forEach(q -> em.createQuery(q).executeUpdate());
+            em.getTransaction().commit();
+          }
+      }
+
+    /******************************************************************************************************************/
+    @Test(dependsOnMethods = "test_database_schema") @Commit
     public void test_populate_database()
       {
-        managedFileEntities.addAll(createManagedFileEntities());
-        runInTx(em -> managedFileEntities.forEach(em::persist));
+        managedFileEntities.addAll(tef.createManagedFileEntities(MAX_MANAGED_FILES, MAX_FINGERPRINTS));
+        managedFileEntities.forEach(em::persist);
       }
 
     /******************************************************************************************************************/
     @Test(dataProvider = "fingerprintParameters", dependsOnMethods = "test_populate_database") @Transactional(NEVER)
     public void test_findManagedFiles (@Nonnull final Optional<String> fingerprint)
+            throws IOException
       {
         // given
         txManager.resetCounters();
@@ -152,60 +154,16 @@ public class JpaDataManagerDaoTest extends AbstractTestNGSpringContextTests
         actualResult.forEach(ManagedFile::getFingerprints);
         assertThat(txManager.getCommitCount(), is(expectedResult.size()));
 
+        // Dumps for easier manual inspection in case of mismatch
+        final var s = String.format("-fingerprint_%s", fingerprint.orElse(""));
         log.info("Actual result:");
+        tef.dumpToYaml(actualResult, Path.of("target/findManagedFiles-actual" + s + ".yaml"));
+        log.info("Expected result:");
+        tef.dumpToYaml(expectedResult, Path.of("target/findManagedFiles-expected" + s + ".yaml"));
+
         txManager.resetCounters();
-        actualResult.forEach(m -> log.info("    {}", m));
         assertThat(actualResult, containsInAnyOrder(expectedResult.toArray()));
         assertThat(txManager.getCommitCount(), is(0));
-      }
-
-    /******************************************************************************************************************/
-    private void runInTx (@Nonnull final Consumer<? super EntityManager> task)
-      {
-        try (final var em = txManager.getEntityManagerFactory().createEntityManager())
-          {
-            em.getTransaction().begin();
-            task.accept(em);
-            em.getTransaction().commit();
-            em.clear();
-          }
-      }
-
-    /******************************************************************************************************************/
-    /******************************************************************************************************************/
-    @Nonnull
-    private List<ManagedFileEntity> createManagedFileEntities()
-      {
-        final var paths = new Random(4)
-                .ints(0x2540, 0xffff)
-                .limit(MAX_MANAGED_FILES)
-                .mapToObj("/foo/bar/%x"::formatted)
-                .toList();
-        final var counts = new Random(5).ints(0, MAX_FINGERPRINTS).iterator();
-        return paths.stream().map(_f(p -> createManagedFileEntity(p, counts.next()))).toList();
-      }
-
-    /******************************************************************************************************************/
-    @Nonnull
-    private ManagedFileEntity createManagedFileEntity (@Nonnull final String path, final int fingerprintCount)
-            throws NoSuchAlgorithmException
-      {
-        final var entity = new ManagedFileEntity(idFactory.createId().stringValue(), path, List.of());
-        final var algorithm = "md5";
-        final var bytes = MessageDigest.getInstance(algorithm).digest(path.getBytes(UTF_8));
-        final var fingerprint = ("%0" + (bytes.length * 2) + "x").formatted(new BigInteger(1, bytes));
-        final var name = Path.of(path).getFileName().toString();
-        final IntFunction<FingerprintEntity> fp = __ -> new FingerprintEntity(idFactory.createId().stringValue(),
-                                                                              name,
-                                                                              algorithm,
-                                                                              fingerprint,
-                                                                              timestampSequence.next(),
-                                                                              entity.getId());
-        entity.setFingerprints(IntStream.range(0, fingerprintCount)
-                                        .mapToObj(fp)
-                                        .sorted(comparing(FingerprintEntity::getTimestamp))
-                                        .toList());
-        return entity;
       }
 
     /******************************************************************************************************************/

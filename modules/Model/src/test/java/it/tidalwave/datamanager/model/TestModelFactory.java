@@ -26,46 +26,61 @@
  */
 package it.tidalwave.datamanager.model;
 
-import nl.jqno.equalsverifier.EqualsVerifier;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.MatcherAssert.assertThat;
+import jakarta.annotation.Nonnull;
+import java.time.LocalDateTime;
+import java.util.Iterator;
+import java.util.Random;
+import java.util.stream.IntStream;
+import java.nio.file.Path;
+import it.tidalwave.util.IdFactory;
+import it.tidalwave.datamanager.util.MockIdFactory;
+import static it.tidalwave.datamanager.util.Utilities.*;
+import static it.tidalwave.util.StreamUtils.randomLocalDateTimeStream;
 
 /***********************************************************************************************************************
  *
  * @author      Fabrizio Giudici
  *
  **********************************************************************************************************************/
-public class FingerprintTest
+public class TestModelFactory
   {
-    private Fingerprint underTest;
+    private final IdFactory idFactory = new MockIdFactory();
+
+    private final Iterator<LocalDateTime> timestampSequence = randomLocalDateTimeStream(
+            17L,
+            LocalDateTime.of(2020, 1, 1, 0, 0),
+            LocalDateTime.of(2023, 12, 31, 23, 59))
+            .iterator();
+
+    private final Iterator<Path> pathSequence = new Random(4)
+            .ints(0x2540, 0xffff)
+            .mapToObj("/foo/bar/%x"::formatted)
+            .map(Path::of)
+            .iterator();
 
     /******************************************************************************************************************/
-    @BeforeMethod
-    public void setup()
+    @Nonnull
+    public ManagedFile createManagedFile (final int fingerprintCount)
       {
-        underTest = new TestModelFactory().createFingerprint();
+        return new ManagedFile(idFactory.createId(),
+                               pathSequence.next(),
+                               () -> IntStream.range(0, fingerprintCount)
+                                              .mapToObj(__ -> createFingerprint())
+                                              .toList());
       }
 
     /******************************************************************************************************************/
-    @Test
-    public void test_equals_and_hashCode()
+    @Nonnull
+    public Fingerprint createFingerprint()
       {
-        EqualsVerifier.forClass(Fingerprint.class).withIgnoredFields("asDelegate").verify();
-      }
-
-    /******************************************************************************************************************/
-    @Test
-    public void test_toString()
-      {
-        // when
-        final var actualResult = underTest.toString();
-        // then
-        assertThat(actualResult, is("Fingerprint(id=00000000-0000-0000-0000-000000000000, " +
-                                    "name=e047, " +
-                                    "algorithm=md5, " +
-                                    "fingerprint=c8e4cdd9e050a8223709bb0a59c18228, " +
-                                    "timestamp=2023-03-15T07:41:36)"));
+        final var name = pathSequence.next().getFileName().toString();
+        final var algorithm = "md5";
+        return Fingerprint.builder()
+                          .id(idFactory.createId())
+                          .name(name)
+                          .algorithm(algorithm)
+                          .fingerprint(fingerprintToString(fingerprintOfString(algorithm, name)))
+                          .timestamp(timestampSequence.next())
+                          .build();
       }
   }

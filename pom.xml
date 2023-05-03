@@ -109,6 +109,12 @@ Architecture and technologies:
             </dependency>
             <dependency>
                 <groupId>it.tidalwave.solidblue3</groupId>
+                <artifactId>solidblue3-model</artifactId>
+                <classifier>tests</classifier>
+                <version>1.1-SNAPSHOT</version>
+            </dependency>
+            <dependency>
+                <groupId>it.tidalwave.solidblue3</groupId>
                 <artifactId>solidblue3-dao</artifactId>
                 <version>1.1-SNAPSHOT</version>
             </dependency>
