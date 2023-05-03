@@ -28,9 +28,9 @@ package it.tidalwave.datamanager.dao.impl.jpa;
 
 import jakarta.annotation.Nonnull;
 import jakarta.inject.Inject;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Consumer;
 import java.util.stream.Stream;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -39,7 +39,6 @@ import jakarta.persistence.EntityManagerFactory;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
-import org.springframework.test.annotation.Commit;
 import org.springframework.test.context.testng.AbstractTestNGSpringContextTests;
 import jakarta.transaction.Transactional;
 import it.tidalwave.util.LazySupplier;
@@ -47,6 +46,7 @@ import it.tidalwave.util.spring.jpa.impl.LoggingJpaTransactionManager;
 import it.tidalwave.datamanager.model.ManagedFile;
 import lombok.extern.slf4j.Slf4j;
 import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 import static it.tidalwave.datamanager.model.DataManager.ManagedFileFinder.SortingKeys.PATH;
@@ -85,12 +85,32 @@ public class JpaDataManagerDaoTest extends AbstractTestNGSpringContextTests
     @Inject
     private LoggingJpaTransactionManager txManager;
 
-    private final List<ManagedFileEntity> managedFileEntities = new ArrayList<>();
+    private TestEntityFactory tef;
 
-    private final TestEntityFactory tef = new TestEntityFactory();
+    private List<ManagedFileEntity> managedFileEntities;
 
     /******************************************************************************************************************/
-    @Test @Commit
+    @BeforeClass
+    public void prepare()
+      {
+        tef = new TestEntityFactory();
+        managedFileEntities = tef.createManagedFileEntities(MAX_MANAGED_FILES, MAX_FINGERPRINTS);
+        log.info("Populating database...");
+        runInOtherTx(em -> managedFileEntities.forEach(em::persist));
+      }
+
+    /******************************************************************************************************************/
+    @AfterClass
+    public void cleanUp()
+      {
+        log.info("Scratching database...");
+        runInOtherTx(em -> Stream.of("ManagedFile", "Fingerprint")
+                                 .map(e -> String.format("DELETE FROM %sEntity", e))
+                                 .forEach(q -> em.createQuery(q).executeUpdate()));
+      }
+
+    /******************************************************************************************************************/
+    @Test
     public void test_database_schema()
             throws IOException, InterruptedException
       {
@@ -101,31 +121,9 @@ public class JpaDataManagerDaoTest extends AbstractTestNGSpringContextTests
         assertSameContents(expectedDump, actualDump);
       }
 
+    // In below tests transactional mode is NEVER because a pre-existing tx context would prevent from counting commits
     /******************************************************************************************************************/
-    @AfterClass
-    public void cleanUp()
-      {
-        try (final var em = emf.createEntityManager())
-          {
-            log.info("Scratching database...");
-            em.getTransaction().begin();
-            Stream.of("ManagedFile", "Fingerprint")
-                  .map(e -> String.format("DELETE FROM %sEntity", e))
-                  .forEach(q -> em.createQuery(q).executeUpdate());
-            em.getTransaction().commit();
-          }
-      }
-
-    /******************************************************************************************************************/
-    @Test(dependsOnMethods = "test_database_schema") @Commit
-    public void test_populate_database()
-      {
-        managedFileEntities.addAll(tef.createManagedFileEntities(MAX_MANAGED_FILES, MAX_FINGERPRINTS));
-        managedFileEntities.forEach(em::persist);
-      }
-
-    /******************************************************************************************************************/
-    @Test(dataProvider = "fingerprintParameters", dependsOnMethods = "test_populate_database") @Transactional(NEVER)
+    @Test(dataProvider = "fingerprintParameters") @Transactional(NEVER)
     public void test_findManagedFiles (@Nonnull final Optional<String> fingerprint)
             throws IOException
       {
@@ -192,9 +190,20 @@ public class JpaDataManagerDaoTest extends AbstractTestNGSpringContextTests
             throws IOException, InterruptedException
       {
         log.info("Dumping schema to {} ...", dumpFile);
-        final var cmd = new String[]{"/bin/sh", "-c", "sqlite3 %s .dump > %s".formatted(dbFile, dumpFile)};
+        final var cmd = new String[]{"/bin/sh", "-c", "sqlite3 %s .schema > %s".formatted(dbFile, dumpFile)};
         final var status = Runtime.getRuntime().exec(cmd).waitFor();
         assertThat(status, is(0));
+      }
+
+    /******************************************************************************************************************/
+    private void runInOtherTx (@Nonnull final Consumer<? super EntityManager> runnable)
+      {
+        try (final var em = emf.createEntityManager())
+          {
+            em.getTransaction().begin();
+            runnable.accept(em);
+            em.getTransaction().commit();
+          }
       }
 
     /******************************************************************************************************************/
