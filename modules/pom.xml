@@ -5,12 +5,12 @@
     <parent>
         <groupId>it.tidalwave.solidblue3</groupId>
         <artifactId>solidblue3</artifactId>
-        <version>1.1-SNAPSHOT</version>
+        <version>1.1</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
     <artifactId>modules</artifactId>
-    <version>1.1-SNAPSHOT</version>
+    <version>1.1</version>
     <packaging>pom</packaging>
     <name>SolidBlue III (modules)</name>
 
