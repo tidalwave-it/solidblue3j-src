@@ -58,4 +58,13 @@ public class DefaultDataManager implements DataManager
       {
         return dao.findManagedFiles();
       }
+
+    /*******************************************************************************************************************
+     * {@inheritDoc}
+     ******************************************************************************************************************/
+    @Override @Nonnull
+    public BackupFinder findBackups()
+      {
+        return dao.findBackups();
+      }
   }

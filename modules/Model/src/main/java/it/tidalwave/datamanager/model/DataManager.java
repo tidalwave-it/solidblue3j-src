@@ -80,6 +80,48 @@ public interface DataManager
       }
 
     /*******************************************************************************************************************
+     * A {@link it.tidalwave.util.Finder} for querying {@link Backup}s.
+     ******************************************************************************************************************/
+    public static interface BackupFinder extends ExtendedFinderSupport<Backup, BackupFinder>
+      {
+        /***************************************************************************************************************
+         * Sorting keys.
+         **************************************************************************************************************/
+        @RequiredArgsConstructor @Getter
+        public enum SortingKeys
+          {
+            LABEL("label");
+
+            @Nonnull
+            private final String name;
+          }
+
+        /***************************************************************************************************************
+         * Specifies that returned {@link Backup}s with the given label.
+         * @param     label         the label
+         * @return                  the same finder in fluent style
+         **************************************************************************************************************/
+        @Nonnull
+        public BackupFinder withLabel (@Nonnull final Optional<String> label);
+
+        /***************************************************************************************************************
+         * Specifies that returned {@link Backup}s with the given volume id.
+         * @param     volumeId      the volume id
+         * @return                  the same finder in fluent style
+         **************************************************************************************************************/
+        @Nonnull
+        public BackupFinder withVolumeId (@Nonnull final Optional<String> volumeId);
+
+        /***************************************************************************************************************
+         * Specifies that returned {@link Backup}s contains the file with the given volume id.
+         * @param     fileId        the file id
+         * @return                  the same finder in fluent style
+         **************************************************************************************************************/
+        @Nonnull
+        public BackupFinder withFileId (@Nonnull final Optional<String> fileId);
+      }
+
+    /*******************************************************************************************************************
      *
      * Queries the managed files.
      *
@@ -88,4 +130,14 @@ public interface DataManager
      ******************************************************************************************************************/
     @Nonnull
     public ManagedFileFinder findManagedFiles();
+
+    /*******************************************************************************************************************
+     *
+     * Queries the backups.
+     *
+     * @return    a {@link it.tidalwave.util.Finder} for {@link it.tidalwave.datamanager.model.Backup}s
+     *
+     ******************************************************************************************************************/
+    @Nonnull
+    public BackupFinder findBackups();
   }

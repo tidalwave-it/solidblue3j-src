@@ -1,5 +1,12 @@
+CREATE TABLE backup_files (id varchar(36) not null, path text not null, backup_id varchar(36) not null, file_id varchar(36) not null, primary key (id));
+CREATE TABLE backups (id varchar(36) not null, base_path text not null, creation_date timestamp not null, encrypted boolean not null, label text not null unique, latest_check_date timestamp, registration_date timestamp not null, volume_id varchar(36) not null unique, primary key (id));
 CREATE TABLE files (id varchar(36) not null, path text not null, primary key (id));
 CREATE TABLE fingerprints (id varchar(36) not null, algorithm varchar(16) not null, file_id varchar(36) not null, name text not null, timestamp timestamp not null, fingerprint varchar(32) not null, primary key (id));
+CREATE INDEX backup_files__id on backup_files (id);
+CREATE INDEX backup_files__file_id on backup_files (file_id);
+CREATE INDEX backups__id on backups (id);
+CREATE INDEX backups__label on backups (label);
+CREATE INDEX backups__volume_id on backups (volume_id);
 CREATE INDEX files__id on files (id);
 CREATE INDEX files__path on files (path);
 CREATE INDEX fingerprints__id on fingerprints (id);

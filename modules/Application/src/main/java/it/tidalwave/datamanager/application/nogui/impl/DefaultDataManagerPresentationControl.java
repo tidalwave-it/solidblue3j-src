@@ -34,11 +34,13 @@ import org.springframework.stereotype.Component;
 import it.tidalwave.util.RoleFactory;
 import it.tidalwave.role.SimpleComposite;
 import it.tidalwave.role.ui.PresentationModel;
+import it.tidalwave.datamanager.model.Backup;
 import it.tidalwave.datamanager.model.DataManager;
 import it.tidalwave.datamanager.model.ManagedFile;
 import it.tidalwave.datamanager.application.nogui.DataManagerPresentation;
 import it.tidalwave.datamanager.application.nogui.DataManagerPresentationControl;
 import lombok.RequiredArgsConstructor;
+import static it.tidalwave.datamanager.model.DataManager.BackupFinder.SortingKeys.LABEL;
 import static it.tidalwave.datamanager.model.DataManager.ManagedFileFinder.SortingKeys.PATH;
 import static it.tidalwave.util.Finder.SortDirection.ASCENDING;
 import static it.tidalwave.util.spring.jpa.JpaSpecificationFinder.by;
@@ -80,6 +82,27 @@ public class DefaultDataManagerPresentationControl implements DataManagerPresent
                                   // .map(m -> m.as(_Presentable_).createPresentationModel(rf)) TODO breaks test
                                   .collect(toCompositePresentationModel());
         presentation.renderManagedFiles(pm);
+      }
+
+    /*******************************************************************************************************************
+     * {@inheritDoc}
+     ******************************************************************************************************************/
+    @Override
+    public void renderBackups (@Nonnull final BackupOptions options)
+      {
+        final RoleFactory<Backup> rf =
+                o -> SimpleComposite.ofCloned(options.renderFiles ? o.getBackupFiles() : List.of());
+
+        final var pm = dataManager.findBackups()
+                                  .withLabel(options.label)
+                                  .withVolumeId(options.volumeId)
+                                  .withFileId(options.fileId)
+                                  .sort(by(LABEL), ASCENDING)
+                                  .stream()
+                                  .map(m -> PresentationModel.of(m, rf))
+                                  // .map(m -> m.as(_Presentable_).createPresentationModel(rf)) TODO breaks test
+                                  .collect(toCompositePresentationModel());
+        presentation.renderBackups(pm);
       }
 
     /*******************************************************************************************************************

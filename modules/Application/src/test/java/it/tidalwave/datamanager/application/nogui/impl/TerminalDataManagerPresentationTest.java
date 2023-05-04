@@ -55,6 +55,30 @@ public class TerminalDataManagerPresentationTest
       }
 
     /******************************************************************************************************************/
+    @Test
+    public void test_renderBackups()
+      {
+        // given
+        final var p1 = createPm("Backup 1");
+        final var p2 = createPm("Backup 2", "/foo/bar/1", "/foo/bar/2");
+        final var p3 = createPm("Backup 3", "/foo/bar/3", "/foo/bar/4", "/foo/bar/5");
+        final var pm = PresentationModel.of("", SimpleComposite.ofCloned(List.of(p1, p2, p3)));
+        // when
+        underTest.renderBackups(pm);
+        // then
+        assertThat(output, is(List.of(
+                "00001) Backup 1",
+                "00002) Backup 2",
+                "    /foo/bar/1",
+                "    /foo/bar/2",
+                "00003) Backup 3",
+                "    /foo/bar/3",
+                "    /foo/bar/4",
+                "    /foo/bar/5")));
+      }
+
+
+    /******************************************************************************************************************/
     @Nonnull
     private static PresentationModel createPm (@Nonnull final String display, @Nonnull final String ... strings)
       {

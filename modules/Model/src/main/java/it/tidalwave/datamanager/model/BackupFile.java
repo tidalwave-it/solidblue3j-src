@@ -24,38 +24,41 @@
  *
  * *********************************************************************************************************************
  */
-package it.tidalwave.datamanager.dao;
+package it.tidalwave.datamanager.model;
 
 import jakarta.annotation.Nonnull;
-import it.tidalwave.datamanager.model.DataManager;
+import java.nio.file.Path;
+import it.tidalwave.util.As;
+import it.tidalwave.util.Id;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+import lombok.ToString;
+import lombok.experimental.Delegate;
 
 /***********************************************************************************************************************
  *
- * The DAO for the application.
+ * A backupped file.
  *
- * @stereotype  DAO
+ * @stereotype  Model
  * @author      Fabrizio Giudici
  *
  **********************************************************************************************************************/
-public interface DataManagerDao
+@RequiredArgsConstructor @EqualsAndHashCode @ToString(doNotUseGetters = true)
+public final class BackupFile implements As
   {
-    /*******************************************************************************************************************
-     *
-     * Queries the managed files.
-     *
-     * @return    a {@link it.tidalwave.util.Finder} for {@link it.tidalwave.datamanager.model.ManagedFile}s
-     *
-     ******************************************************************************************************************/
-    @Nonnull
-    public DataManager.ManagedFileFinder findManagedFiles();
+    @Delegate @ToString.Exclude @EqualsAndHashCode.Exclude
+    private final As asDelegate = As.forObject(this);
 
-    /*******************************************************************************************************************
-     *
-     * Queries the backups.
-     *
-     * @return    a {@link it.tidalwave.util.Finder} for {@link it.tidalwave.datamanager.model.Backup}s
-     *
-     ******************************************************************************************************************/
-    @Nonnull
-    public DataManager.BackupFinder findBackups();
+    @Getter @Nonnull
+    private final Id id;
+
+    @Getter @Nonnull
+    private final Path path;
+
+    @Getter @Nonnull
+    private final ManagedFile managedFile;
+
+    @Getter @Nonnull @ToString.Exclude @EqualsAndHashCode.Exclude // don't generate a loop
+    private final Backup backup;
   }

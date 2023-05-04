@@ -24,38 +24,33 @@
  *
  * *********************************************************************************************************************
  */
-package it.tidalwave.datamanager.dao;
+package it.tidalwave.datamanager.application.nogui.impl;
 
 import jakarta.annotation.Nonnull;
-import it.tidalwave.datamanager.model.DataManager;
+import it.tidalwave.role.ui.Displayable;
+import it.tidalwave.dci.annotation.DciRole;
+import it.tidalwave.datamanager.model.BackupFile;
+import lombok.AllArgsConstructor;
 
 /***********************************************************************************************************************
  *
- * The DAO for the application.
+ * An implementation of {@link Displayable} for {@link BackupFile}.
  *
- * @stereotype  DAO
+ * @stereotype  Role
  * @author      Fabrizio Giudici
  *
  **********************************************************************************************************************/
-public interface DataManagerDao
+@DciRole(datumType = BackupFile.class) @AllArgsConstructor
+public class BackupFileDisplayable implements Displayable
   {
-    /*******************************************************************************************************************
-     *
-     * Queries the managed files.
-     *
-     * @return    a {@link it.tidalwave.util.Finder} for {@link it.tidalwave.datamanager.model.ManagedFile}s
-     *
-     ******************************************************************************************************************/
     @Nonnull
-    public DataManager.ManagedFileFinder findManagedFiles();
+    private final BackupFile owner;
 
-    /*******************************************************************************************************************
-     *
-     * Queries the backups.
-     *
-     * @return    a {@link it.tidalwave.util.Finder} for {@link it.tidalwave.datamanager.model.Backup}s
-     *
-     ******************************************************************************************************************/
-    @Nonnull
-    public DataManager.BackupFinder findBackups();
+    @Override @Nonnull
+    public String getDisplayName()
+      {
+        final var originalPath = owner.getManagedFile().getPath().toString();
+        final var backupPath = owner.getPath().toString();
+        return originalPath.equals(backupPath) ? originalPath : originalPath + " as " + backupPath;
+      }
   }

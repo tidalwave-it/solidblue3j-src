@@ -29,7 +29,10 @@ package it.tidalwave.datamanager.model;
 import jakarta.annotation.Nonnull;
 import java.time.LocalDateTime;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Random;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Supplier;
 import java.util.stream.IntStream;
 import java.nio.file.Path;
 import it.tidalwave.util.IdFactory;
@@ -58,6 +61,8 @@ public class TestModelFactory
             .map(Path::of)
             .iterator();
 
+    private final Iterator<Integer> intSequence = IntStream.iterate(0, n -> n + 1).iterator();
+
     /******************************************************************************************************************/
     @Nonnull
     public ManagedFile createManagedFile (final int fingerprintCount)
@@ -82,5 +87,38 @@ public class TestModelFactory
                           .fingerprint(fingerprintToString(fingerprintOfString(algorithm, name)))
                           .timestamp(timestampSequence.next())
                           .build();
+      }
+
+    /******************************************************************************************************************/
+    @Nonnull
+    public Backup createBackup (@Nonnull final ManagedFile managedFile)
+      {
+        final var backupPath = resolve(Path.of("/backup"), pathSequence.next().getFileName());
+        final var ref = new AtomicReference<Backup>();
+        final Supplier<List<BackupFile>> s =
+            () -> List.of(new BackupFile(idFactory.createId(),
+                                         resolve(backupPath, managedFile.getPath()),
+                                         managedFile,
+                                         ref.get()));
+        final var backup = Backup.builder()
+                                 .id(idFactory.createId())
+                                 .label("Label #" + intSequence.next())
+                                 .encrypted(true)
+                                 .volumeId(idFactory.createId())
+                                 .basePath(managedFile.getPath().getParent())
+                                 .creationDate(timestampSequence.next())
+                                 .registrationDate(timestampSequence.next())
+                                 .latestCheckDate(timestampSequence.next())
+                                 .backupFiles(s)
+                                 .build();
+        ref.set(backup);
+        return backup;
+      }
+
+    /******************************************************************************************************************/
+    @Nonnull
+    private static Path resolve (@Nonnull final Path path1, @Nonnull final Path path2)
+      {
+        return path1.resolve(path2.toString().substring(1));
       }
   }

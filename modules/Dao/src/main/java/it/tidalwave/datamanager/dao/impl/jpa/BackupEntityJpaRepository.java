@@ -24,38 +24,20 @@
  *
  * *********************************************************************************************************************
  */
-package it.tidalwave.datamanager.dao;
+package it.tidalwave.datamanager.dao.impl.jpa;
 
-import jakarta.annotation.Nonnull;
-import it.tidalwave.datamanager.model.DataManager;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
 /***********************************************************************************************************************
  *
- * The DAO for the application.
+ * The repository for {@link BackupEntity}.
  *
- * @stereotype  DAO
+ * @stereotype  Repository
  * @author      Fabrizio Giudici
  *
  **********************************************************************************************************************/
-public interface DataManagerDao
+public interface BackupEntityJpaRepository
+        extends JpaRepository<BackupEntity, String>, JpaSpecificationExecutor<BackupEntity>
   {
-    /*******************************************************************************************************************
-     *
-     * Queries the managed files.
-     *
-     * @return    a {@link it.tidalwave.util.Finder} for {@link it.tidalwave.datamanager.model.ManagedFile}s
-     *
-     ******************************************************************************************************************/
-    @Nonnull
-    public DataManager.ManagedFileFinder findManagedFiles();
-
-    /*******************************************************************************************************************
-     *
-     * Queries the backups.
-     *
-     * @return    a {@link it.tidalwave.util.Finder} for {@link it.tidalwave.datamanager.model.Backup}s
-     *
-     ******************************************************************************************************************/
-    @Nonnull
-    public DataManager.BackupFinder findBackups();
   }

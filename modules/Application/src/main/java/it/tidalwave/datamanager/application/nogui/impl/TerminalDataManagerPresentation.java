@@ -77,6 +77,16 @@ public class TerminalDataManagerPresentation implements DataManagerPresentation
      * {@inheritDoc}
      ******************************************************************************************************************/
     @Override
+    public void renderBackups (@Nonnull final PresentationModel pm)
+      {
+        final var s = pm.as(_CompositeOfPresentationModel_).findChildren().stream();
+        Pair.indexedPairStream(s, Pair.BASE_1).forEach(this::renderBackup);
+      }
+
+    /*******************************************************************************************************************
+     * {@inheritDoc}
+     ******************************************************************************************************************/
+    @Override
     public void output (@Nonnull final String string)
       {
         printer.accept(string);
@@ -100,5 +110,17 @@ public class TerminalDataManagerPresentation implements DataManagerPresentation
         printer.accept("%05d) %s".formatted(pair.a, managedFilePm.as(_Displayable_).getDisplayName()));
         managedFilePm.maybeAs(_CompositeOfAs_).ifPresent(c ->
             c.findChildren().forEach(f -> printer.accept("    " + f.as(_Displayable_).getDisplayName())));
+      }
+
+    /*******************************************************************************************************************
+     *
+     ******************************************************************************************************************/
+    private void renderBackup (@Nonnull final Pair<Integer, ? extends PresentationModel> pair)
+      {
+        printer.accept("%05d) %s".formatted(pair.a,
+                                            pair.b.as(_Displayable_).getDisplayName().replace("\n", "\n       ")));
+        pair.b.as(_CompositeOfAs_)
+              .findChildren()
+              .forEach(f -> printer.accept("    " + f.as(_Displayable_).getDisplayName()));
       }
   }

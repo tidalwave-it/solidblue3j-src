@@ -37,11 +37,13 @@ import it.tidalwave.datamanager.model.DataManager;
 import it.tidalwave.datamanager.model.Fingerprint;
 import it.tidalwave.datamanager.model.ManagedFile;
 import it.tidalwave.datamanager.application.nogui.Holder;
+import it.tidalwave.datamanager.application.nogui.MockBackupFinder;
 import it.tidalwave.datamanager.application.nogui.MockDataManagerPresentation;
 import it.tidalwave.datamanager.application.nogui.MockManagedFileFinder;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 import static it.tidalwave.datamanager.application.nogui.DataManagerPresentationControl.*;
+import static it.tidalwave.datamanager.model.DataManager.BackupFinder.SortingKeys.LABEL;
 import static it.tidalwave.datamanager.model.DataManager.ManagedFileFinder.SortingKeys.PATH;
 import static it.tidalwave.util.Finder.SortDirection.ASCENDING;
 import static it.tidalwave.util.spring.jpa.JpaSpecificationFinder.by;
@@ -65,6 +67,8 @@ public class DefaultDataManagerPresentationControlTest
 
     private Holder<MockManagedFileFinder> managedFileFinder;
 
+    private Holder<MockBackupFinder> backupFinder;
+
     private final IdFactory idFactory = IdFactory.MOCK;
 
     /******************************************************************************************************************/
@@ -74,9 +78,11 @@ public class DefaultDataManagerPresentationControlTest
         managedFileFinder = Holder.of(h -> new MockManagedFileFinder(h, List.of(
                 mockManagedFile("/foo/bar/1","1:f1", "1:f2"),
                 mockManagedFile("/foo/bar/2","2:f1", "2:f2", "2:f3"))));
+        backupFinder = Holder.of(MockBackupFinder::new);
         dataManager = mock(DataManager.class);
         presentation = new MockDataManagerPresentation();
         when(dataManager.findManagedFiles()).thenReturn(managedFileFinder.f);
+        when(dataManager.findBackups()).thenReturn(backupFinder.f);
         underTest = new DefaultDataManagerPresentationControl(dataManager, presentation);
       }
 
@@ -138,6 +144,64 @@ public class DefaultDataManagerPresentationControlTest
         assertThat(managedFileFinder.f.sorters, is(List.of(Pair.of(by(PATH), ASCENDING))));
         // don't assert results, they are not processed by the class under test
         assertThat(managedFileFinder.f.fingerprint, is(Optional.of("2:f2")));
+      }
+
+    /******************************************************************************************************************/
+    @Test
+    public void must_render_backups()
+      {
+        // when
+        underTest.renderBackups();
+        // then
+        assertThat(backupFinder.f.sorters, is(List.of(Pair.of(by(LABEL), ASCENDING))));
+      }
+
+    /******************************************************************************************************************/
+    @Test
+    public void must_render_backups_with_files()
+      {
+        // when
+        underTest.renderBackups(BackupOptions.with().renderFiles());
+        // then
+        assertThat(backupFinder.f.sorters, is(List.of(Pair.of(by(LABEL), ASCENDING))));
+        assertThat(backupFinder.f.label, is(Optional.empty()));
+        assertThat(backupFinder.f.volumeId, is(Optional.empty()));
+      }
+
+    /******************************************************************************************************************/
+    @Test
+    public void must_render_backups_with_label()
+      {
+        // when
+        underTest.renderBackups(BackupOptions.with().label("foo"));
+        // then
+        assertThat(backupFinder.f.sorters, is(List.of(Pair.of(by(LABEL), ASCENDING))));
+        assertThat(backupFinder.f.label, is(Optional.of("foo")));
+        assertThat(backupFinder.f.volumeId, is(Optional.empty()));
+      }
+
+    /******************************************************************************************************************/
+    @Test
+    public void must_render_backups_with_volumeId()
+      {
+        // when
+        underTest.renderBackups(BackupOptions.with().volumeId("foo"));
+        // then
+        assertThat(backupFinder.f.sorters, is(List.of(Pair.of(by(LABEL), ASCENDING))));
+        assertThat(backupFinder.f.label, is(Optional.empty()));
+        assertThat(backupFinder.f.volumeId, is(Optional.of("foo")));
+      }
+
+    /******************************************************************************************************************/
+    @Test
+    public void must_render_backups_with_fileId()
+      {
+        // when
+        underTest.renderBackups(BackupOptions.with().fileId("id"));
+        // then
+        assertThat(backupFinder.f.sorters, is(List.of(Pair.of(by(LABEL), ASCENDING))));
+        assertThat(backupFinder.f.label, is(Optional.empty()));
+        assertThat(backupFinder.f.fileId, is(Optional.of("id")));
       }
 
     /******************************************************************************************************************/

@@ -87,6 +87,60 @@ public class TestEntityFactory
       }
 
     /******************************************************************************************************************/
+    @Nonnull
+    public List<BackupEntity> createBackupEntities (@Nonnull final List<? extends ManagedFileEntity> managedFileEntities,
+                                                    final int backupEntityCount,
+                                                    final int maxBackupFiles)
+      {
+        return IntStream.range(1, backupEntityCount)
+                        .mapToObj(i -> createBackupEntity(i, managedFileEntities, maxBackupFiles))
+                        .toList();
+      }
+
+    /******************************************************************************************************************/
+    @Nonnull
+    public BackupEntity createBackupEntity (final int i,
+                                            @Nonnull final List<? extends ManagedFileEntity> managedFileEntities,
+                                            final int maxBackupFiles)
+      {
+        final var entity = new BackupEntity(idFactory.createId().stringValue(),
+                                            "Label #" + i,
+                                            idFactory.createId().stringValue(),
+                                            i % 2 == 0,
+                                            "basePath " + i,
+                                            timestampSequence.next(),
+                                            timestampSequence.next(),
+                                            timestampSequence.next(),
+                                            List.of());
+
+        if (!managedFileEntities.isEmpty())
+          {
+            final var index = new Random(5).ints(0, managedFileEntities.size()).iterator();
+            entity.setBackupFiles(IntStream.rangeClosed(1, maxBackupFiles).mapToObj(__ ->
+              {
+                final var managedFileEntity = managedFileEntities.get(index.next());
+                return new BackupFileEntity(idFactory.createId().stringValue(),
+                                            entity,
+                                            managedFileEntity,
+                                            managedFileEntity.getPath());
+              }).sorted(comparing(BackupFileEntity::getPath)).toList());
+          }
+
+        return entity;
+      }
+
+    /******************************************************************************************************************/
+    @Nonnull
+    public BackupFileEntity createBackupFileEntity (@Nonnull final ManagedFileEntity managedFile)
+      {
+        final var backupEntity =  createBackupEntity(1, List.of(), 1);
+        return new BackupFileEntity(idFactory.createId().stringValue(),
+                                    backupEntity,
+                                    managedFile,
+                                    "path");
+      }
+
+    /******************************************************************************************************************/
     public void dumpToYaml (@Nonnull final Object object, @Nonnull final Path path)
             throws IOException
       {

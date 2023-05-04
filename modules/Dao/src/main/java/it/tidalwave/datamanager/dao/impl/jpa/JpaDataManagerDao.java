@@ -28,10 +28,15 @@ package it.tidalwave.datamanager.dao.impl.jpa;
 
 import jakarta.annotation.Nonnull;
 import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.atomic.AtomicReference;
 import java.nio.file.Path;
 import org.springframework.stereotype.Component;
 import it.tidalwave.util.Id;
 import it.tidalwave.util.spring.jpa.impl.Fetcher;
+import it.tidalwave.datamanager.model.Backup;
+import it.tidalwave.datamanager.model.BackupFile;
+import it.tidalwave.datamanager.model.DataManager.BackupFinder;
 import it.tidalwave.datamanager.model.DataManager.ManagedFileFinder;
 import it.tidalwave.datamanager.model.Fingerprint;
 import it.tidalwave.datamanager.model.ManagedFile;
@@ -54,6 +59,9 @@ public class JpaDataManagerDao implements DataManagerDao
     private final ManagedFileEntityJpaRepository managedFileRepo;
 
     @Nonnull
+    private final BackupEntityJpaRepository backupRepo;
+
+    @Nonnull
     private final Fetcher fetcher;
 
     /*******************************************************************************************************************
@@ -63,6 +71,15 @@ public class JpaDataManagerDao implements DataManagerDao
     public ManagedFileFinder findManagedFiles()
       {
         return new JpaManagedFileFinder(managedFileRepo, this::managedFileEntityToModel);
+      }
+
+    /*******************************************************************************************************************
+     * {@inheritDoc}
+     ******************************************************************************************************************/
+    @Override @Nonnull
+    public BackupFinder findBackups()
+      {
+        return new JpaBackupFinder(backupRepo, this::backupEntityToModel);
       }
 
     /*******************************************************************************************************************
@@ -100,5 +117,52 @@ public class JpaDataManagerDao implements DataManagerDao
                           .fingerprint(entity.getValue())
                           .timestamp(entity.getTimestamp())
                           .build();
+      }
+
+    /*******************************************************************************************************************
+     * {@inheritDoc}
+     ******************************************************************************************************************/
+    @Nonnull
+    public Backup backupEntityToModel (@Nonnull final BackupEntity entity)
+      {
+        final var ref = new AtomicReference<Backup>();
+        final var backup = Backup.builder()
+                     .id(Id.of(entity.getId()))
+                     .label(entity.getLabel())
+                     .volumeId(Id.of(entity.getVolumeId()))
+                     .encrypted(entity.isEncrypted())
+                     .basePath(Path.of(entity.getBasePath()))
+                     .creationDate(entity.getCreationDate())
+                     .registrationDate(entity.getRegistrationDate())
+                     .latestCheckDate(Optional.ofNullable(entity.getLatestCheckDate()))
+                     .backupFiles(entity.isInitialized()
+                          ? () -> backupFileEntitiesToModel(ref.get(), entity.getBackupFiles())
+                          : () -> backupFileEntitiesToModel(ref.get(), fetcher.fetch(entity, BackupEntity::getBackupFiles)))
+                     .build();
+        ref.set(backup);
+        return backup;
+      }
+
+    /*******************************************************************************************************************
+     *
+     ******************************************************************************************************************/
+    @Nonnull
+    private List<BackupFile> backupFileEntitiesToModel (@Nonnull final Backup backup,
+                                                        @Nonnull final List<? extends BackupFileEntity> entities)
+      {
+        return entities.stream().map(e -> backupFileEntityToModel(e, backup)).toList();
+      }
+
+    /*******************************************************************************************************************
+     *
+     ******************************************************************************************************************/
+    @Nonnull
+    private BackupFile backupFileEntityToModel (@Nonnull final BackupFileEntity entity,
+                                                @Nonnull final Backup backup)
+      {
+        return new BackupFile(Id.of(entity.getId()),
+                              Path.of(entity.getPath()),
+                              managedFileEntityToModel(entity.getManagedFile()), // TODO: use flyweight? Needed?
+                              backup); // TODO: use flyweight? Needed?
       }
   }

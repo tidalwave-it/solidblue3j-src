@@ -24,38 +24,38 @@
  *
  * *********************************************************************************************************************
  */
-package it.tidalwave.datamanager.dao;
+package it.tidalwave.datamanager.application.nogui.impl;
 
-import jakarta.annotation.Nonnull;
-import it.tidalwave.datamanager.model.DataManager;
+import it.tidalwave.datamanager.model.TestModelFactory;
+import org.testng.annotations.Test;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 /***********************************************************************************************************************
  *
- * The DAO for the application.
- *
- * @stereotype  DAO
  * @author      Fabrizio Giudici
  *
  **********************************************************************************************************************/
-public interface DataManagerDao
+public class BackupDisplayableTest
   {
-    /*******************************************************************************************************************
-     *
-     * Queries the managed files.
-     *
-     * @return    a {@link it.tidalwave.util.Finder} for {@link it.tidalwave.datamanager.model.ManagedFile}s
-     *
-     ******************************************************************************************************************/
-    @Nonnull
-    public DataManager.ManagedFileFinder findManagedFiles();
-
-    /*******************************************************************************************************************
-     *
-     * Queries the backups.
-     *
-     * @return    a {@link it.tidalwave.util.Finder} for {@link it.tidalwave.datamanager.model.Backup}s
-     *
-     ******************************************************************************************************************/
-    @Nonnull
-    public DataManager.BackupFinder findBackups();
+    @Test
+    public void testDisplayable()
+      {
+        // given
+        final var tmf = new TestModelFactory();
+        final var managedFile = tmf.createManagedFile(0);
+        final var backup = tmf.createBackup(managedFile);
+        final var underTest = new BackupDisplayable(backup);
+        // when
+        final var actualResult = underTest.getDisplayName();
+        // then
+        assertThat(actualResult, is("""
+                  label:       Label #0
+                  volume id:   00000002-0000-0000-0000-000000000000
+                  encrypted:   true
+                  created:     2023-03-15T07:41:36
+                  registered:  2020-12-11T03:09:52
+                  checked:     2022-10-01T14:34:25
+                  base path:   /foo/bar"""));
+      }
   }

@@ -50,6 +50,15 @@ public interface DataManagerPresentation
 
     /*******************************************************************************************************************
      *
+     * Render backups.
+     *
+     * @param   backupsPm           the backups
+     *
+     ******************************************************************************************************************/
+    public void renderBackups (@Nonnull PresentationModel backupsPm);
+
+    /*******************************************************************************************************************
+     *
      * Output a line to the console.
      *
      * @param   string    the pattern for the output

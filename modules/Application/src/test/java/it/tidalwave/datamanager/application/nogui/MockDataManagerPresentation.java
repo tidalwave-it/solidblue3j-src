@@ -63,6 +63,16 @@ public class MockDataManagerPresentation implements DataManagerPresentation
       }
 
     @Override
+    public void renderBackups (@Nonnull final PresentationModel pm)
+      {
+        pm.as(_CompositeOfAs_).findChildren().forEach(o ->
+          {
+            objects.add(o.as(ManagedFile.class).getPath().toString());
+            objects.addAll(o.as(_CompositeOfAs_).findChildren().stream().map(c -> c.as(ManagedFile.class).getPath()).toList());
+          });
+      }
+
+    @Override
     public void output (@Nonnull final String string)
       {
         output.add(string);

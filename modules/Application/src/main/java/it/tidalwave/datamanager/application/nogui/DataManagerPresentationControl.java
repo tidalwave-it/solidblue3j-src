@@ -112,6 +112,63 @@ public interface DataManagerPresentationControl
           }
       }
 
+    @Builder(builderClassName = "Builder") @ToString @EqualsAndHashCode
+    public static class BackupOptions
+      {
+        public static class Builder
+          {
+            @Nonnull @Tolerate
+            public Builder label (@Nonnull final String label)
+              {
+                return label(Optional.of(label));
+              }
+
+            @Nonnull @Tolerate
+            public Builder volumeId (@Nonnull final String volumeId)
+              {
+                return volumeId(Optional.of(volumeId));
+              }
+
+            @Nonnull @Tolerate
+            public Builder fileId (@Nonnull final String fileId)
+              {
+                return fileId(Optional.of(fileId));
+              }
+
+            @Nonnull @Tolerate
+            public Builder renderFiles()
+              {
+                return renderFiles(true);
+              }
+          }
+
+        /** The label. */
+        @Nonnull @Default
+        public final Optional<String> label = Optional.empty();
+
+        @Nonnull @Default
+        public final Optional<String> volumeId = Optional.empty();
+
+        @Nonnull @Default
+        public final Optional<String> fileId = Optional.empty();
+
+        /** Render files too. */
+        public final boolean renderFiles;
+
+        // Syntactic sugar
+        @Nonnull
+        public static BackupOptions.Builder with()
+          {
+            return builder();
+          }
+
+        @Nonnull
+        public static BackupOptions.Builder withDefaultOptions()
+          {
+            return builder();
+          }
+      }
+
     /*******************************************************************************************************************
      *
      * Render managed files.
@@ -142,4 +199,35 @@ public interface DataManagerPresentationControl
      *
      ******************************************************************************************************************/
     public void renderManagedFiles (@Nonnull ManagedFileOptions options);
+
+    /*******************************************************************************************************************
+     *
+     * Render managed backups with the specified options.
+     *
+     ******************************************************************************************************************/
+    public default void renderBackups()
+      {
+        renderBackups(BackupOptions.withDefaultOptions());
+      }
+
+    /*******************************************************************************************************************
+     *
+     * Render managed backups with the specified options.
+     *
+     * @param   options   the options
+     *
+     ******************************************************************************************************************/
+    public default void renderBackups (@Nonnull final BackupOptions.Builder options)
+      {
+        renderBackups(options.build());
+      }
+
+    /*******************************************************************************************************************
+     *
+     * Render managed backups with the specified options.
+     *
+     * @param   options   the options
+     *
+     ******************************************************************************************************************/
+    public void renderBackups (@Nonnull BackupOptions options);
   }

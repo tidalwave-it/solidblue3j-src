@@ -49,13 +49,14 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
+import static it.tidalwave.datamanager.model.DataManager.BackupFinder.SortingKeys.LABEL;
 import static it.tidalwave.datamanager.model.DataManager.ManagedFileFinder.SortingKeys.PATH;
 import static jakarta.transaction.Transactional.TxType.NEVER;
 import static org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase.Replace.NONE;
 import static it.tidalwave.util.Finder.SortDirection.ASCENDING;
 import static it.tidalwave.util.spring.jpa.JpaSpecificationFinder.by;
 import static it.tidalwave.util.test.FileComparisonUtils.assertSameContents;
-import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 
@@ -72,6 +73,8 @@ public class JpaDataManagerDaoTest extends AbstractTestNGSpringContextTests
   {
     private static final int MAX_MANAGED_FILES = 10;
     private static final int MAX_FINGERPRINTS = 10;
+    private static final int BACKUP_ENTITY_COUNT = 10;
+    private static final int MAX_BACKUP_FILES = 10;
 
     @Inject
     private JpaDataManagerDao underTest;
@@ -89,14 +92,18 @@ public class JpaDataManagerDaoTest extends AbstractTestNGSpringContextTests
 
     private List<ManagedFileEntity> managedFileEntities;
 
+    private List<BackupEntity> backupEntities;
+
     /******************************************************************************************************************/
     @BeforeClass
     public void prepare()
       {
         tef = new TestEntityFactory();
         managedFileEntities = tef.createManagedFileEntities(MAX_MANAGED_FILES, MAX_FINGERPRINTS);
+        backupEntities = tef.createBackupEntities(managedFileEntities, BACKUP_ENTITY_COUNT, MAX_BACKUP_FILES);
         log.info("Populating database...");
         runInOtherTx(em -> managedFileEntities.forEach(em::persist));
+        runInOtherTx(em -> backupEntities.forEach(em::persist));
       }
 
     /******************************************************************************************************************/
@@ -104,7 +111,7 @@ public class JpaDataManagerDaoTest extends AbstractTestNGSpringContextTests
     public void cleanUp()
       {
         log.info("Scratching database...");
-        runInOtherTx(em -> Stream.of("ManagedFile", "Fingerprint")
+        runInOtherTx(em -> Stream.of("ManagedFile", "Fingerprint", "Backup", "BackupFile")
                                  .map(e -> String.format("DELETE FROM %sEntity", e))
                                  .forEach(q -> em.createQuery(q).executeUpdate()));
       }
@@ -165,6 +172,62 @@ public class JpaDataManagerDaoTest extends AbstractTestNGSpringContextTests
       }
 
     /******************************************************************************************************************/
+    @Test(dataProvider = "backupParameters") @Transactional(NEVER)
+    public void test_findBackups (@Nonnull final Optional<String> label,
+                                  @Nonnull final Optional<String> volumeId,
+                                  @Nonnull final Optional<String> fileId)
+            throws IOException
+      {
+        // given
+        txManager.resetCounters();
+        // when
+        final var actualResult = underTest.findBackups()
+                                          .sort(by(LABEL), ASCENDING)
+                                          .withLabel(label)
+                                          .withVolumeId(volumeId)
+                                          .withFileId(fileId)
+                                          .results();
+        // then
+        assertThat(txManager.getCommitCount(), is(1));
+
+        final var expectedResult = backupEntities.stream()
+            .filter(be -> label.map(n -> be.getLabel().equals(n)).orElse(true))
+            .filter(be -> volumeId.map(v -> be.getVolumeId().equals(v)).orElse(true))
+            .filter(be -> fileId.map(i -> be.getBackupFiles().stream()
+                                            .anyMatch(bf -> bf.getManagedFile().getId().equals(i)))
+                                .orElse(true))
+            .map(underTest::backupEntityToModel)
+            .toList();
+
+        log.info("Asserting that lazy collection of backup files not fetched yet...");
+        // TODO: this does not test BackupEntity lazy field, only Backup
+        actualResult.stream().map(b -> (LazySupplier<?>)inspect(b, "backupFiles"))
+                             .forEach(lz -> assertThat(lz.isInitialized(), is(false)));
+
+        log.info("Triggering lazy fetch...");
+        txManager.resetCounters();
+        actualResult.forEach(b -> b.getBackupFiles().forEach(bf -> assertThat(bf.getBackup(), is(sameInstance(b)))));
+        assertThat(txManager.getCommitCount(), is(expectedResult.size()));
+
+        // they will be triggered by next asserts, invalidating assertion count
+        log.info("Triggering lazy fetch for ManagedFiles...");
+        expectedResult.forEach(b -> b.getBackupFiles().forEach(bg -> bg.getManagedFile().getFingerprints()));
+        actualResult.forEach(b -> b.getBackupFiles().forEach(bg -> bg.getManagedFile().getFingerprints()));
+
+        // Dumps for easier manual inspection in case of mismatch
+        final var s = String.format("-label_%s-volumeId-%s-fileId_%s",
+                                    label.orElse(""), volumeId.orElse(""), fileId.orElse(""));
+        log.info("Actual result:");
+        tef.dumpToYaml(actualResult, Path.of("target/findBackups-actual" + s + ".yaml"));
+        log.info("Expected result:");
+        tef.dumpToYaml(expectedResult, Path.of("target/findManagedFiles-expected" + s + ".yaml"));
+
+        txManager.resetCounters();
+        assertThat(actualResult, containsInAnyOrder(expectedResult.toArray()));
+        assertThat(txManager.getCommitCount(), is(0));
+      }
+
+    /******************************************************************************************************************/
     private static boolean contains (@Nonnull final ManagedFileEntity entity, @Nonnull final String fingerprint)
       {
         return entity.getFingerprints().stream().anyMatch(fp -> fp.getValue().equals(fingerprint));
@@ -215,6 +278,22 @@ public class JpaDataManagerDaoTest extends AbstractTestNGSpringContextTests
             { Optional.empty() },
             { Optional.of("missing") },
             { Optional.of("80fe035fe88f37471862c5ba5013b472") }
+          };
+      }
+
+    /******************************************************************************************************************/
+    @DataProvider
+    private static Object[][] backupParameters()
+      {
+        return new Object[][]
+          {
+            { Optional.empty(),       Optional.empty(),           Optional.empty() },
+            { Optional.of("missing"), Optional.empty(),           Optional.empty() },
+            { Optional.of("label 4"), Optional.empty(),           Optional.empty() },
+            { Optional.empty(),       Optional.of("missing"),     Optional.empty() },
+            { Optional.empty(),       Optional.of("volumeId 7"),  Optional.empty() },
+            { Optional.empty(),       Optional.empty(),           Optional.of("missing") },
+            { Optional.empty(),       Optional.empty(),           Optional.of("id") },
           };
       }
   }

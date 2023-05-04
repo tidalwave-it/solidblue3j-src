@@ -24,38 +24,45 @@
  *
  * *********************************************************************************************************************
  */
-package it.tidalwave.datamanager.dao;
+package it.tidalwave.datamanager.application.nogui.impl;
 
 import jakarta.annotation.Nonnull;
-import it.tidalwave.datamanager.model.DataManager;
+import java.util.Objects;
+import it.tidalwave.role.ui.Displayable;
+import it.tidalwave.dci.annotation.DciRole;
+import it.tidalwave.datamanager.model.Backup;
+import lombok.AllArgsConstructor;
 
 /***********************************************************************************************************************
  *
- * The DAO for the application.
+ * An implementation of {@link Displayable} for {@link Fingerprint}.
  *
- * @stereotype  DAO
- * @author      Fabrizio Giudici
+ * @stereotype Role
+ * @author Fabrizio Giudici
  *
  **********************************************************************************************************************/
-public interface DataManagerDao
+@DciRole(datumType = Backup.class) @AllArgsConstructor
+public class BackupDisplayable implements Displayable
   {
-    /*******************************************************************************************************************
-     *
-     * Queries the managed files.
-     *
-     * @return    a {@link it.tidalwave.util.Finder} for {@link it.tidalwave.datamanager.model.ManagedFile}s
-     *
-     ******************************************************************************************************************/
     @Nonnull
-    public DataManager.ManagedFileFinder findManagedFiles();
+    private final Backup owner;
 
-    /*******************************************************************************************************************
-     *
-     * Queries the backups.
-     *
-     * @return    a {@link it.tidalwave.util.Finder} for {@link it.tidalwave.datamanager.model.Backup}s
-     *
-     ******************************************************************************************************************/
-    @Nonnull
-    public DataManager.BackupFinder findBackups();
+    @Override @Nonnull
+    public String getDisplayName()
+      {
+        return ("""
+                label:       %s
+                volume id:   %s
+                encrypted:   %s
+                created:     %s
+                registered:  %s
+                checked:     %s
+                base path:   %s""").formatted(owner.getLabel(),
+                                              owner.getVolumeId(),
+                                              owner.isEncrypted(),
+                                              owner.getCreationDate(),
+                                              owner.getRegistrationDate(),
+                                              owner.getLatestCheckDate().map(Objects::toString).orElse("never"),
+                                              owner.getBasePath());
+      }
   }
