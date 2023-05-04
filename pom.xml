@@ -39,7 +39,7 @@
 
     <groupId>it.tidalwave.solidblue3</groupId>
     <artifactId>solidblue3</artifactId>
-    <version>1.1</version>
+    <version>1.2-SNAPSHOT</version>
     <packaging>pom</packaging>
     <name>SolidBlue III</name>
     <inceptionYear>2023</inceptionYear>
@@ -92,7 +92,7 @@ Architecture and technologies:
         <connection>scm:git:${scm.repo.readonly.url}</connection>
         <developerConnection>scm:git:${scm.repo.effective.url}</developerConnection>
         <url>${scm.repo.browse.url}</url>
-        <tag>1.1</tag>
+        <tag>HEAD</tag>
     </scm>
 
     <dependencyManagement>
@@ -100,28 +100,28 @@ Architecture and technologies:
             <dependency>
                 <groupId>it.tidalwave.solidblue3</groupId>
                 <artifactId>solidblue3-application-nogui</artifactId>
-                <version>1.1</version>
+                <version>1.2-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>it.tidalwave.solidblue3</groupId>
                 <artifactId>solidblue3-model</artifactId>
-                <version>1.1</version>
+                <version>1.2-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>it.tidalwave.solidblue3</groupId>
                 <artifactId>solidblue3-model</artifactId>
                 <classifier>tests</classifier>
-                <version>1.1</version>
+                <version>1.2-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>it.tidalwave.solidblue3</groupId>
                 <artifactId>solidblue3-dao</artifactId>
-                <version>1.1</version>
+                <version>1.2-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>it.tidalwave.solidblue3</groupId>
                 <artifactId>solidblue3-commons</artifactId>
-                <version>1.1</version>
+                <version>1.2-SNAPSHOT</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
